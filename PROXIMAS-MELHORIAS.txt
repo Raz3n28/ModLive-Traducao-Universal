@@ -1,0 +1,4 @@
+PROXIMAS MELHORIAS (anotadas para fazer depois)
+================================================
+
+[ ] Menu F8, painel lateral: trocar "By Raz3n" por "By PauloRaz3n" (src\Menu.cs, funcao Lateral).
