@@ -47,3 +47,7 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
     - reaplicar quando o jogo trocar de tela ou de resolucao (como a varredura de textos);
     - nao afeta janelas IMGUI de outros mods (ex.: editor de personagens);
     - conferir antes se o jogo ja tem escala de UI nas configuracoes (ai o mod so complementa).
+
+[ ] Painel: tirar o destaque do cartao Glossario (todos os 6 cartoes iguais, sem fundo colorido).
+[ ] Painel, "Ultimas traducoes": nao mostrar quando a traducao e igual ao original (ex.: x15 -> x15, x3000 -> x3000)
+    e alinhar a seta "->" com o texto (hoje fica um pouco acima).
