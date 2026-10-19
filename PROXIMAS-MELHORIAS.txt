@@ -17,3 +17,8 @@ PROXIMAS MELHORIAS (anotadas para fazer depois)
     - tecla que pausa e continua a traducao (uma tecla so para as duas funcoes, sem tecla por padrao
       ou uma livre como F7);
     - botao "Trocar tecla": aperta e o mod grava a proxima tecla; Esc cancela; avisa se repetir a outra.
+
+[ ] Botao "Traducao" do canto da tela arrastavel (fica em cima do botao do editor de personagens):
+    - segurar e arrastar move o botao; clique rapido (sem arrastar) continua abrindo o menu;
+    - posicao salva no config.txt (como a janela do menu) e presa dentro da tela;
+    - opcao "Voltar botao para o canto" na aba Avancado, caso ele se perca.
