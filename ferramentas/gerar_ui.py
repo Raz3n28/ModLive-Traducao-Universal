@@ -258,7 +258,15 @@ def gerar_comum(fontes):
             l, t2, r, bt = d.textbbox((0, 0), "Aa", font=f)
             d.text(((18 * u - (r - l)) / 2 - l, (18 * u - (bt - t2)) / 2 - t2), "Aa", font=f, fill=c)
 
-    for nome, f in (("painel", painel), ("geral", casa), ("provedor", chave), ("estilo", pincel), ("glossario", livro),
+    def tela(d, u, c):
+        # monitor com setas para fora (escala da interface)
+        d.rounded_rectangle((1.5 * u, 2.5 * u, 16.5 * u, 13 * u), int(1.5 * u), outline=c, width=L(u))
+        d.line([(6 * u, 16 * u), (12 * u, 16 * u)], fill=c, width=L(u))
+        d.line([(9 * u, 13 * u), (9 * u, 16 * u)], fill=c, width=L(u))
+        d.line([(5 * u, 9.5 * u), (5 * u, 6 * u), (8.5 * u, 6 * u)], fill=c, width=L(u), joint="curve")
+        d.line([(13 * u, 6 * u), (13 * u, 9.5 * u), (9.5 * u, 9.5 * u)], fill=c, width=L(u), joint="curve")
+
+    for nome, f in (("interface", tela), ("painel", painel), ("geral", casa), ("provedor", chave), ("estilo", pincel), ("glossario", livro),
                     ("categorias", etiqueta), ("avancado", ajustes), ("log", terminal), ("fontes", letras)):
         icone(nome, f)
 

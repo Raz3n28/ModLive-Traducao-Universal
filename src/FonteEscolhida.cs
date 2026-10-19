@@ -158,9 +158,9 @@ internal static class FonteEscolhida
         return i > 0 && i < filtradas.Count ? filtradas[i].Nome : "";
     }
 
-    // Previa: botao inteiro ja desenhado com o nome na propria fonte (v_common/Fontes/previas/<nome>.png,
-    // <nome>_hover.png e <nome>_sel.png), gerado fora do jogo porque o menu IMGUI nao desenha fonte carregada
-    // de arquivo. sufixo = "", "_hover" ou "_sel". null = sem imagem (usa o nome).
+    // Previa: o nome escrito na propria fonte, branco com fundo transparente (v_common/Fontes/previas/<nome>.png,
+    // em 2x), gerado por ferramentas/gerar_previas_fontes.py porque o menu IMGUI nao desenha fonte carregada
+    // de arquivo. O menu pinta na cor do tema. sufixo = "" (reservado). null = sem imagem (usa o nome).
     private static readonly Dictionary<string, Texture2D> previas = new Dictionary<string, Texture2D>();
 
     public static Texture2D Previa(int i, string sufixo)

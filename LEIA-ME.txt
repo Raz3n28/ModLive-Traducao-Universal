@@ -20,6 +20,8 @@ O QUE FAZ
   - Visual do menu F8 em PNG (modelo\v_common\UI\<tema>, gerado por ferramentas\gerar_ui.py): 6 temas, logo PR,
     aba Painel, janela arrastavel e redimensionavel, botao do canto arrastavel.
   - Teclas configuraveis (aba Avancado > Teclas): abrir o menu (F8) e pausar/continuar (F7).
+  - Aba Interface: escala da interface do jogo e tamanho das fontes (50% a 200%), geral e por parte da tela.
+  - Previas da aba Fontes: ferramentas\gerar_previas_fontes.py (nome em branco, o menu pinta na cor do tema).
   Nao altera arquivo do jogo. Desativou o mod = jogo original.
 
 PASSO A PASSO

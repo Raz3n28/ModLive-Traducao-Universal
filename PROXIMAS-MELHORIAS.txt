@@ -28,7 +28,7 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
     animacoes (abrir, aba que desliza, interruptor, botao do canto pulsando com fila), barra da fila
     e transparencia do menu (aba Avancado > Aparencia).
 
-[ ] Aba Fontes nao segue o tema (no Claro fica com blocos pretos; nos outros o escolhido fica teal e os
+[x] Aba Fontes nao segue o tema (no Claro fica com blocos pretos; nos outros o escolhido fica teal e os
     botoes nao combinam com os das fontes do Windows).
     Causa: as previas em v_common\Fontes\previas\*.png tem o fundo pintado na imagem (#1b2128, hover
     #29323c, escolhida teal #2dd4bf), entao nao mudam com o tema.
@@ -37,7 +37,7 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
     texto do tema (escolhida = cor do texto do destaque). Assim todos os botoes da aba ficam iguais em
     todos os temas, e o nome continua escrito na propria fonte.
 
-[ ] Aba "Interface" (com icone proprio): mexer na interface do proprio jogo, salvo no config.txt.
+[x] Aba "Interface" (com icone proprio): mexer na interface do proprio jogo, salvo no config.txt.
     - escala geral da UI de 50% a 200% (multiplica o CanvasScaler de todos os Canvas do jogo);
     - escala separada para HUD (barras de cima/baixo) e para janelas (inventario, personagem...);
     - tamanho das fontes de 50% a 200%, so os textos (TMP_Text e UI.Text), sem mexer nas janelas;
@@ -48,20 +48,24 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
     - nao afeta janelas IMGUI de outros mods (ex.: editor de personagens);
     - conferir antes se o jogo ja tem escala de UI nas configuracoes (ai o mod so complementa).
 
-[ ] Painel: tirar o destaque do cartao Glossario (todos os 6 cartoes iguais, sem fundo colorido).
-[ ] Painel, "Ultimas traducoes": nao mostrar quando a traducao e igual ao original (ex.: x15 -> x15, x3000 -> x3000)
+[x] Painel: tirar o destaque do cartao Glossario (todos os 6 cartoes iguais, sem fundo colorido).
+[x] Painel, "Ultimas traducoes": nao mostrar quando a traducao e igual ao original (ex.: x15 -> x15, x3000 -> x3000)
     e alinhar a seta "->" com o texto (hoje fica um pouco acima).
 
-[ ] Cursor de texto no campo errado (Glossario, Categorias e outros campos depois do Buscar): clicando num
+[x] Cursor de texto no campo errado (Glossario, Categorias e outros campos depois do Buscar): clicando num
     campo, o cursor piscando aparece no campo de CIMA (o texto digitado vai no certo); clicando no de cima,
     o cursor some. CAUSA CONFIRMADA: em Lateral (src\Menu.cs) o GUI.Box do fundo da aba escolhida so e
     chamado no Repaint; o GUI.Box pega um numero de controle (control ID), entao no Repaint todos os
     controles seguintes ficam com o numero +1 e o cursor e desenhado no campo anterior.
     Conserto: chamar esse GUI.Box em todos os eventos (so atualizar a posicao animada no Repaint).
     Conferir tambem o GUI.Box do botao do canto (BotaoCanto), que hoje so roda no Repaint.
-[ ] Painel > "Ultimas traducoes" > Editar num texto que nao e termo do glossario: hoje abre o "+ Novo termo"
+[x] Painel > "Ultimas traducoes" > Editar num texto que nao e termo do glossario: hoje abre o "+ Novo termo"
     ja preenchido, mas com frase longa (varias linhas, com {0}) o Original aparece vazio e a Traducao enorme.
     So oferecer "Editar" para termos curtos (Glossario.Termo); frase longa abre so a busca.
 
 [x] QR code do Ko-fi na lateral do menu (cartao "Me apoie", texto no idioma do menu, sem link escrito;
     clicar no QR abre a pagina). Aparece quando a janela tem altura para ele.
+
+Notas do que foi feito na ultima rodada:
+  - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).
+  - Aba Interface: tecla de voltar ao padrao comeca sem tecla (escolha em Avancado > Teclas ou na propria aba).

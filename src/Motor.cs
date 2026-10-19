@@ -205,7 +205,8 @@ internal static class LiveMotor
 
     private static void LembrarUltima(string original, string traducao)
     {
-        if (string.IsNullOrEmpty(traducao)) return;
+        // traducao igual ao original (numeros, "x15") nao interessa na lista
+        if (string.IsNullOrEmpty(traducao) || traducao.Trim() == original.Trim()) return;
         for (int i = ultimas.Count - 1; i >= 0; i--)
             if (ultimas[i][0] == original) ultimas.RemoveAt(i);
         ultimas.Add(new string[] { original, traducao });

@@ -97,6 +97,10 @@ internal static class LiveConfig
     public static int Opacidade = 100;                         // transparencia do menu (40 a 100 %)
     public static KeyCode TeclaMenu = KeyCode.F8;              // abre/fecha o menu
     public static KeyCode TeclaPausa = KeyCode.F7;             // pausa/continua a traducao (None = sem tecla)
+    public static int EscalaUI = 100;                          // aba Interface: escala geral da interface do jogo (%)
+    public static int EscalaFonte = 100;                       // aba Interface: tamanho das fontes do jogo (%)
+    public static KeyCode TeclaResetUI = KeyCode.None;         // volta a interface do jogo para 100%
+    private static readonly Dictionary<string, int> escalaCanvas = new Dictionary<string, int>();   // % por Canvas (nome)
     public static string HojeData = "";                        // "traduzidos hoje": dia (yyyy-MM-dd) e quantos
     public static int HojeTotal;
     public static bool Contexto = true;     // manda as ultimas frases como contexto para a IA (so modo com chave)
@@ -207,6 +211,10 @@ internal static class LiveConfig
             else if (k == "tecla_menu") TeclaMenu = LerTecla(v, KeyCode.F8);
             else if (k == "tecla_pausa") TeclaPausa = LerTecla(v, KeyCode.F7);
             else if (k == "hoje_data") HojeData = v;
+            else if (k == "escala_ui") { if (int.TryParse(v, out n)) EscalaUI = Mathf.Clamp(n, 50, 200); }
+            else if (k == "escala_fonte") { if (int.TryParse(v, out n)) EscalaFonte = Mathf.Clamp(n, 50, 200); }
+            else if (k == "tecla_reset_ui") TeclaResetUI = LerTecla(v, KeyCode.None);
+            else if (k.StartsWith("escala_canvas.")) { if (int.TryParse(v, out n)) DefinirEscalaCanvas(k.Substring(14), n); }
             else if (k == "hoje_total") { if (int.TryParse(v, out n)) HojeTotal = Mathf.Max(0, n); }
             else if (k == "menu_idioma") { if (int.TryParse(v, out n)) LiveTxt.Atual = n; }
             else if (k == "estilo") { if (int.TryParse(v, out n)) Estilo = Mathf.Clamp(n, 0, Estilos.Length - 1); }
@@ -242,6 +250,10 @@ internal static class LiveConfig
             sb.AppendLine("opacidade=" + Opacidade);
             sb.AppendLine("tecla_menu=" + TeclaMenu);
             sb.AppendLine("tecla_pausa=" + TeclaPausa);
+            sb.AppendLine("escala_ui=" + EscalaUI);
+            sb.AppendLine("escala_fonte=" + EscalaFonte);
+            sb.AppendLine("tecla_reset_ui=" + TeclaResetUI);
+            foreach (KeyValuePair<string, int> kv in escalaCanvas) sb.AppendLine("escala_canvas." + kv.Key + "=" + kv.Value);
             sb.AppendLine("hoje_data=" + HojeData);
             sb.AppendLine("hoje_total=" + HojeTotal);
             if (Janela.width > 0f) sb.AppendLine("janela=" + (int)Janela.x + ";" + (int)Janela.y + ";" + (int)Janela.width + ";" + (int)Janela.height);
@@ -262,6 +274,32 @@ internal static class LiveConfig
     {
         try { return (KeyCode)Enum.Parse(typeof(KeyCode), v, true); }
         catch { return padrao; }
+    }
+
+    // escala de um Canvas do jogo pelo nome (100 = sem mudar)
+    public static int EscalaCanvas(string nome)
+    {
+        int v;
+        return nome != null && escalaCanvas.TryGetValue(nome, out v) ? v : 100;
+    }
+
+    public static void DefinirEscalaCanvas(string nome, int v)
+    {
+        if (string.IsNullOrEmpty(nome) || nome.IndexOf('=') >= 0) return;
+        v = Mathf.Clamp(v, 50, 200);
+        if (v == 100) escalaCanvas.Remove(nome);
+        else escalaCanvas[nome] = v;
+    }
+
+    public static bool TemEscalaCanvas() { return escalaCanvas.Count > 0; }
+
+    // "Voltar ao padrao" da aba Interface
+    public static void ResetarInterface()
+    {
+        EscalaUI = 100;
+        EscalaFonte = 100;
+        escalaCanvas.Clear();
+        sujo = true;
     }
 
     // mais uma traducao nova hoje (zera quando o dia muda)

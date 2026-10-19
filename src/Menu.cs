@@ -12,7 +12,7 @@ internal static class LiveMenu
 
     private static float larguraUtil = 560f;   // largura do conteudo das abas (para os botoes de escolha)
     private static bool aberto;
-    private static int aba = 8;             // 0 Geral, 1 Provedor, 2 Estilo, 3 Glossario, 4 Categorias, 5 Avancado, 6 Log, 7 Fontes, 8 Painel
+    private static int aba = 8;             // 0 Geral, 1 Provedor, 2 Estilo, 3 Glossario, 4 Categorias, 5 Avancado, 6 Log, 7 Fontes, 8 Painel, 9 Interface
     private static Vector2 rolagem;
     private static bool mostrarChave;
     private static string campoRpm;
@@ -31,12 +31,12 @@ internal static class LiveMenu
     // animacoes: abrir (fade), destaque da aba que desliza, interruptores
     private static float abertoEm;
     private static float navY = -1f, navX, navW;
-    private static readonly float[] navYs = new float[9];
+    private static readonly float[] navYs = new float[10];
     private static readonly Dictionary<string, float> anims = new Dictionary<string, float>();
     // botao "Traducao" do canto: arrastar sem abrir o menu
     private static bool arrastandoBotao, moveuBotao;
     private static Vector2 pegaBotao, inicioBotao;
-    // teclas: 0 = nada, 1 = esperando a tecla do menu, 2 = a de pausar
+    // teclas: 0 = nada, 1 = esperando a tecla do menu, 2 = a de pausar, 3 = a de voltar a interface ao padrao
     private static int capturando;
     private static KeyCode teclaSegurada = KeyCode.None;
     private static string msgTecla = "";
@@ -45,7 +45,7 @@ internal static class LiveMenu
     private static GUIStyle sCartao, sCartaoTit, sCartaoDest, sCartaoDestTit, sCartaoDestTxt, sBloco, sNum, sNumDest, sValor, sLink, sLinkDest;
     private static GUIStyle sFechar, sSombra, sVazio, sInterruptor, sRotulo, sOrig, sNavTxt, sNavTxtSel, sNavFundo;
     private static Texture2D texSombra, texBranco, texBolinha, texIntOff, texIntOn, texFaixa, texEtiqueta, texKofi;
-    private static GUIStyle sPeqCentro;
+    private static GUIStyle sPeqCentro, sSeta;
     // visual da proposta B: botoes planos arredondados, teal #2dd4bf no selecionado
     private static GUIStyle sBtn, sSel, sAmbar, sPerigo, sNav, sNavSel, sCampo, sMarcar, sBarra, sBarraPolegar;
     private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
@@ -114,6 +114,11 @@ internal static class LiveMenu
             else if (LiveConfig.TeclaPausa != KeyCode.None && ev.keyCode == LiveConfig.TeclaPausa)
             {
                 AlternarTraducao();
+                ev.Use();
+            }
+            else if (LiveConfig.TeclaResetUI != KeyCode.None && ev.keyCode == LiveConfig.TeclaResetUI)
+            {
+                ResetarInterface();
                 ev.Use();
             }
         }
@@ -188,10 +193,15 @@ internal static class LiveMenu
         capturando = 0;
         msgTecla = "";
         if (k == KeyCode.Escape) return;
-        KeyCode outra = qual == 1 ? LiveConfig.TeclaPausa : LiveConfig.TeclaMenu;
-        if (k == outra) { msgTecla = LiveTxt.T("tecla_repetida"); return; }
+        // a mesma tecla nao pode ficar em dois atalhos
+        if ((qual != 1 && k == LiveConfig.TeclaMenu) || (qual != 2 && k == LiveConfig.TeclaPausa) || (qual != 3 && k == LiveConfig.TeclaResetUI))
+        {
+            msgTecla = LiveTxt.T("tecla_repetida");
+            return;
+        }
         if (qual == 1) LiveConfig.TeclaMenu = k;
-        else LiveConfig.TeclaPausa = k;
+        else if (qual == 2) LiveConfig.TeclaPausa = k;
+        else LiveConfig.TeclaResetUI = k;
         LiveConfig.Marcar();
     }
 
@@ -237,7 +247,7 @@ internal static class LiveMenu
             ev.Use();
         }
 
-        if (ev.type != EventType.Repaint) return;
+        // o GUI.Box roda em todos os eventos (mesmo numero de controles sempre); so a cor muda no Repaint
         Color antes = GUI.color;
         float a = 0.85f;
         if (LiveMotor.NaFila > 0) a = 0.75f + 0.25f * (float)Math.Sin(Time.unscaledTime * 4f);
@@ -337,6 +347,7 @@ internal static class LiveMenu
         switch (aba)
         {
             case 8: PaginaPainel(); break;
+            case 9: PaginaInterface(); break;
             case 1: PaginaProvedor(drv); break;
             case 2: PaginaEstilo(); break;
             case 3: PaginaGlossario(); break;
@@ -429,6 +440,7 @@ internal static class LiveMenu
             case 6: return LiveTxt.T("nav_log");
             case 7: return LiveTxt.T("nav_fontes");
             case 8: return LiveTxt.T("nav_painel");
+            case 9: return LiveTxt.T("nav_interface");
             default: return LiveTxt.T("nav_geral");
         }
     }
@@ -456,15 +468,17 @@ internal static class LiveMenu
         BotaoAtivar(lat.width - 24f, 34f);
         GUILayout.Space(8f);
 
-        // fundo da aba escolhida: desliza ate a aba nova
+        // fundo da aba escolhida: desliza ate a aba nova. O GUI.Box pega um numero de controle (ID), entao e
+        // chamado em TODOS os eventos; senao os campos de texto seguintes trocam de numero e o cursor vai para o
+        // campo errado. So a posicao animada anda no Repaint.
         if (Event.current.type == EventType.Repaint && navW > 0f)
         {
             float alvo = navYs[aba];
             if (navY < 0f) navY = alvo;
             navY += (alvo - navY) * (1f - (float)Math.Exp(-PassoAnim() * 16f));
             if (Math.Abs(navY - alvo) < 0.3f) navY = alvo;
-            GUI.Box(new Rect(navX, navY, navW, 34f), GUIContent.none, sNavFundo);
         }
+        GUI.Box(new Rect(navX, navY < 0f ? -100f : navY, navW, 34f), GUIContent.none, sNavFundo);
         Nav(8, "nav_painel", "ic_painel");
         Nav(0, "nav_geral", "ic_geral");
         Nav(1, "nav_prov", "ic_provedor");
@@ -474,9 +488,10 @@ internal static class LiveMenu
         Nav(5, "nav_avanc", "ic_avancado");
         Nav(6, "nav_log", "ic_log");
         Nav(7, "nav_fontes", "ic_fontes");
+        Nav(9, "nav_interface", "ic_interface");
         GUILayout.FlexibleSpace();
         // so aparece se a janela for alta o bastante (a mesma altura em todos os eventos: os IDs nao mudam)
-        if (texKofi != null && lat.height >= 790f) KoFi(lat.width - 24f);
+        if (texKofi != null && lat.height >= 840f) KoFi(lat.width - 24f);
         GUILayout.Label(LiveTxt.T("menu_idioma"), sPeq);
         int atual = LiveTxt.Atual;
         int novo = Escolha(atual, LiveTxt.Codigos, 3, lat.width - 24f);
@@ -1546,6 +1561,7 @@ internal static class LiveMenu
         Cartao(LiveTxt.T("av_teclas"));
         LinhaTecla(1, LiveTxt.T("tecla_menu"), LiveConfig.TeclaMenu, false);
         LinhaTecla(2, LiveTxt.T("tecla_pausa"), LiveConfig.TeclaPausa, true);
+        LinhaTecla(3, LiveTxt.T("tecla_reset_ui"), LiveConfig.TeclaResetUI, true);
         if (capturando != 0) GUILayout.Label(LiveTxt.T("tecla_aperte"), sAviso);
         else if (msgTecla.Length > 0) GUILayout.Label(msgTecla, sErro);
         FimCartao();
@@ -1563,12 +1579,96 @@ internal static class LiveMenu
         }
         if (podeTirar && tecla != KeyCode.None && GUILayout.Button(LiveTxt.T("tecla_sem"), GUILayout.Width(100f)))
         {
-            LiveConfig.TeclaPausa = KeyCode.None;
+            if (qual == 3) LiveConfig.TeclaResetUI = KeyCode.None;
+            else LiveConfig.TeclaPausa = KeyCode.None;
             LiveConfig.Marcar();
             capturando = 0;
         }
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
+    }
+
+    // ---------------- aba Interface (escala da interface do jogo) ----------------
+
+    private static void ResetarInterface()
+    {
+        LiveConfig.ResetarInterface();
+        EscalaUI.Mudou = true;
+    }
+
+    private static void PaginaInterface()
+    {
+        // "Voltar ao padrao" sempre no topo: se diminuir demais, e so clicar aqui (ou na tecla)
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(LiveTxt.T("if_dica"), sPeq);
+        if (GUILayout.Button(LiveTxt.T("if_padrao"), sAmbar, GUILayout.Width(200f), GUILayout.Height(32f))) ResetarInterface();
+        GUILayout.EndHorizontal();
+        GUILayout.Space(6f);
+
+        Cartao(LiveTxt.T("if_geral"));
+        int g = Porcento(LiveConfig.EscalaUI, true);
+        if (g != LiveConfig.EscalaUI) { LiveConfig.EscalaUI = g; LiveConfig.Marcar(); EscalaUI.Mudou = true; }
+        GUILayout.Label(LiveTxt.T("if_geral_dica"), sPeq);
+        FimCartao();
+
+        Cartao(LiveTxt.T("if_fonte"));
+        int f = Porcento(LiveConfig.EscalaFonte, true);
+        if (f != LiveConfig.EscalaFonte) { LiveConfig.EscalaFonte = f; LiveConfig.Marcar(); EscalaUI.Mudou = true; }
+        GUILayout.Label(LiveTxt.T("if_fonte_dica"), sPeq);
+        FimCartao();
+
+        // cada Canvas do jogo (HUD, janelas...) com a sua escala, por cima da geral
+        Cartao(LiveTxt.T("if_partes"));
+        GUILayout.Label(LiveTxt.T("if_partes_dica"), sPeq);
+        List<string> nomes = EscalaUI.Nomes;
+        if (nomes.Count == 0) GUILayout.Label(LiveTxt.T("if_nenhum"), sPeq);
+        for (int i = 0; i < nomes.Count; i++)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Cortar(nomes[i], 40), GUILayout.Width(260f));
+            int v = LiveConfig.EscalaCanvas(nomes[i]);
+            int nv = Porcento(v, false);
+            if (nv != v) { LiveConfig.DefinirEscalaCanvas(nomes[i], nv); LiveConfig.Marcar(); EscalaUI.Mudou = true; }
+            GUILayout.EndHorizontal();
+        }
+        FimCartao();
+
+        Cartao(LiveTxt.T("av_teclas"));
+        LinhaTecla(3, LiveTxt.T("tecla_reset_ui"), LiveConfig.TeclaResetUI, true);
+        if (capturando == 3) GUILayout.Label(LiveTxt.T("tecla_aperte"), sAviso);
+        else if (msgTecla.Length > 0) GUILayout.Label(msgTecla, sErro);
+        FimCartao();
+        GUILayout.Label(LiveTxt.T("if_imgui"), sPeq);
+    }
+
+    // controle de porcentagem 50% a 200%: - valor +, e (atalhos) 50 75 100 125 150 200
+    private static int Porcento(int v, bool atalhos)
+    {
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("-", GUILayout.Width(36f), GUILayout.Height(28f))) v -= 5;
+        GUILayout.Label(v + "%", Chip(v < 75 ? Tema.Aviso : Tema.Destaque, false), GUILayout.Width(70f), GUILayout.Height(28f));
+        if (GUILayout.Button("+", GUILayout.Width(36f), GUILayout.Height(28f))) v += 5;
+        if (atalhos)
+        {
+            GUILayout.Space(10f);
+            int[] passos = new int[] { 50, 75, 100, 125, 150, 200 };
+            for (int i = 0; i < passos.Length; i++)
+            {
+                // 50, 100 e 200 = divisao exata: a fonte pixelada fica nitida
+                bool nitido = passos[i] == 50 || passos[i] == 100 || passos[i] == 200;
+                string rot = passos[i] + "%" + (nitido ? " *" : "");
+                if (GUILayout.Button(rot, v == passos[i] ? sSel : sBtn, GUILayout.Width(64f), GUILayout.Height(28f))) v = passos[i];
+            }
+        }
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        v = Mathf.Clamp(v, EscalaUI.Min, EscalaUI.Max);
+        if (atalhos)
+        {
+            GUILayout.Label(LiveTxt.T("if_nitido"), sPeq);
+            if (v < 75) GUILayout.Label(LiveTxt.T("if_aviso_peq"), sAviso);
+        }
+        return v;
     }
 
     // ---------------- aba Painel ----------------
@@ -1624,7 +1724,7 @@ internal static class LiveMenu
         List<TermoGlossario> lista = Glossario.Lista;
         for (int i = 0; i < lista.Count; i++) if (lista[i].Travado) travados++;
         CartaoResumo(cw, LiveTxt.T("pn_glos"), LiveTxt.F("pn_termos", Num(Glossario.Total)),
-            LiveTxt.F("pn_termos_sub", Categorias.Ordem().Length, Num(travados)), 3, true);
+            LiveTxt.F("pn_termos_sub", Categorias.Ordem().Length, Num(travados)), 3, false);
         CartaoResumo(cw, LiveTxt.T("pn_cache_card"), gratis ? LiveTxt.T("pn_ritmo_auto") : LiveTxt.F("pn_rpm_val", LiveConfig.Rpm),
             LiveTxt.F("pn_cache_sub", Num(TradCache.Total)), 5, false);
         CartaoResumo(cw, LiveTxt.T("pn_fontes"), FonteEscolhida.Indice <= 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(FonteEscolhida.Indice),
@@ -1683,12 +1783,13 @@ internal static class LiveMenu
             string orig = ult[i][0], trad = ult[i][1];
             GUILayout.BeginHorizontal();
             GUILayout.Label(Cortar(orig.Replace("\n", " "), (int)(wo / 8f)), sOrig, GUILayout.Width(wo), GUILayout.Height(26f));
-            GUILayout.Label("→", sPeq, GUILayout.Width(18f), GUILayout.Height(26f));
+            GUILayout.Label("→", sSeta, GUILayout.Width(22f), GUILayout.Height(26f));
             GUILayout.Label(Cortar(trad.Replace("\n", " "), (int)(wt / 8f)), sValor, GUILayout.Width(wt), GUILayout.Height(26f));
             GUILayout.FlexibleSpace();
             TermoGlossario tg = Glossario.Obter(orig);
             if (tg != null) GUILayout.Label(Cortar(Categorias.Nome(tg.Cat), 12), Chip(Categorias.Cor(tg.Cat), false), GUILayout.Height(24f));
-            if (GUILayout.Button(LiveTxt.T("editar"), GUILayout.Width(80f), GUILayout.Height(26f)))
+            // Editar so para o que cabe no glossario (termo curto); frase longa nao tem o que editar ali
+            if ((tg != null || Glossario.Termo(orig)) && GUILayout.Button(LiveTxt.T("editar"), GUILayout.Width(80f), GUILayout.Height(26f)))
             {
                 // abre o glossario ja buscando esse texto
                 aba = 3;
@@ -1751,20 +1852,33 @@ internal static class LiveMenu
         int n = FonteEscolhida.Quantas;
         const int cols = 3;
         float bw = Mathf.Floor((larguraUtil - 4f * (cols - 1)) / cols);
-        Color antes = GUI.backgroundColor;
         for (int i = 0; i < n; i += cols)
         {
             GUILayout.BeginHorizontal();
             for (int j = i; j < i + cols && j < n; j++)
             {
+                // botao na cor do tema; a previa (nome escrito na propria fonte, branco e transparente) vai por
+                // cima na cor do texto do botao. Sem previa: o nome em texto normal.
                 string nome = j == 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(j);
-                GUIStyle est = EstiloPrevia(j, j == sel);
-                if (GUILayout.Button(est != null ? "" : nome, est != null ? est : (j == sel ? sSel : sBtn), GUILayout.Width(bw), GUILayout.Height(38f)))
-                    FonteEscolhida.Escolher(j);
+                Texture2D previa = FonteEscolhida.Previa(j, "");
+                GUIStyle est = j == sel ? sSel : sBtn;
+                GUIContent rot = new GUIContent(previa != null ? "" : nome);
+                Rect b = GUILayoutUtility.GetRect(rot, est, GUILayout.Width(bw), GUILayout.Height(38f));
+                if (GUI.Button(b, rot, est)) FonteEscolhida.Escolher(j);
+                if (previa != null && Event.current.type == EventType.Repaint)
+                {
+                    float ph = previa.height / 2f, pw = previa.width / 2f;
+                    float maxW = b.width - 20f;
+                    if (pw > maxW) { ph *= maxW / pw; pw = maxW; }
+                    Color antes = GUI.color;
+                    Color c = j == sel ? Tema.DestaqueTexto : Tema.Texto;
+                    GUI.color = new Color(c.r, c.g, c.b, antes.a);
+                    GUI.DrawTexture(new Rect(b.x + 10f, b.y + (b.height - ph) / 2f, pw, ph), previa);
+                    GUI.color = antes;
+                }
             }
             GUILayout.EndHorizontal();
         }
-        GUI.backgroundColor = antes;
 
         GUILayout.Space(10f);
         GUILayout.BeginHorizontal();
@@ -1777,34 +1891,6 @@ internal static class LiveMenu
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Label(LiveTxt.T("fonte_pasta_dica"), sPeq);
-    }
-
-    // Estilo cujo fundo e a imagem do botao com o nome na propria fonte. So a coluna lisa antes da
-    // borda direita estica (9-slice), entao o texto nao deforma. null = fonte sem imagem.
-    private static readonly Dictionary<string, GUIStyle> estilosPrevia = new Dictionary<string, GUIStyle>();
-    private static int versaoPrevias = -1;
-
-    private static GUIStyle EstiloPrevia(int j, bool selecionada)
-    {
-        if (versaoPrevias != FonteEscolhida.Versao) { estilosPrevia.Clear(); versaoPrevias = FonteEscolhida.Versao; }
-        string chave = FonteEscolhida.Nome(j) + (selecionada ? "|s" : "|n");
-        GUIStyle e;
-        if (estilosPrevia.TryGetValue(chave, out e)) return e;
-        e = null;
-        Texture2D normal = FonteEscolhida.Previa(j, selecionada ? "_sel" : "");
-        Texture2D foco = selecionada ? normal : FonteEscolhida.Previa(j, "_hover");
-        if (normal != null)
-        {
-            if (foco == null) foco = normal;
-            e = new GUIStyle(GUI.skin.label);
-            e.normal.background = normal;
-            e.hover.background = foco; e.active.background = foco; e.focused.background = normal;
-            e.border = new RectOffset(Mathf.Max(0, normal.width - 9), 8, 0, 0);
-            e.margin = new RectOffset(2, 2, 2, 2);
-            e.padding = new RectOffset(0, 0, 0, 0);
-        }
-        estilosPrevia[chave] = e;
-        return e;
     }
 
     // ---------------- aba 7: Log ----------------
@@ -2034,6 +2120,10 @@ internal static class LiveMenu
         sLink.fontStyle = FontStyle.Bold;
         sLink.wordWrap = false;
         sLink.stretchWidth = false;
+        sSeta = new GUIStyle(sPeq);
+        sSeta.alignment = TextAnchor.MiddleCenter;
+        sSeta.wordWrap = false;
+        sSeta.fontSize = 14;
         sPeqCentro = new GUIStyle(sPeq);
         sPeqCentro.alignment = TextAnchor.UpperCenter;
         sLinkDest = new GUIStyle(sLink);

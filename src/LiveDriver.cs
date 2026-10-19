@@ -108,6 +108,10 @@ internal class LiveDriver : MonoBehaviour
 
         if (versaoFonte != FonteEscolhida.Versao) ReaplicarFonte();
 
+        // escala da interface e das fontes do jogo (aba Interface): vale mesmo com a traducao pausada
+        try { EscalaUI.Tick(); }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "UI scale"); }
+
         if (!LiveConfig.Ativo) { fila.Clear(); naFila.Clear(); return; }
 
         Vigiar();
