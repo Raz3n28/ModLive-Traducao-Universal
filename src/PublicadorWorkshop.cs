@@ -195,8 +195,8 @@ internal static class PublicadorWorkshop
         ugc.updateItem(new PublishedFileId_t(id), up, new Action<UGCManager.OperationResult>(AoAtualizar), "Primeira versao");
     }
 
-    // Atualizacao: manda SO os arquivos do mod. Titulo, descricao e capa nao sao tocados
-    // (edite direto na pagina da Workshop), para a Steam nao colocar o item em analise de novo.
+    // Atualizacao: manda os arquivos do mod e a imagem de capa (Manifest\preview.png). Titulo e descricao
+    // nao sao tocados (edite direto na pagina da Workshop), para a Steam nao colocar o item em analise de novo.
     private static CallResult<SubmitItemUpdateResult_t> retornoEnvio;
     private static UGCUpdateHandle_t handleDireto = UGCUpdateHandle_t.Invalid;
     private static ulong idEnvio;
@@ -204,7 +204,7 @@ internal static class PublicadorWorkshop
     private static void EnviarSoArquivos(ulong id, string pasta)
     {
         idEnvio = id;
-        Passo("Enviando SO os arquivos (titulo/descricao/capa ficam como estao na Steam)");
+        Passo("Enviando os arquivos e a imagem de capa (titulo e descricao ficam como estao na Steam)");
         Passo("Pasta: " + pasta + " (" + TamanhoPasta(pasta) + ")");
         UGCUpdateHandle_t h = SteamUGC.StartItemUpdate(SteamUtils.GetAppID(), new PublishedFileId_t(id));
         if (h == UGCUpdateHandle_t.Invalid)
@@ -218,6 +218,12 @@ internal static class PublicadorWorkshop
             Relatar("FALHOU: a Steam nao aceitou a pasta do mod: " + pasta, false);
             Fim();
             return;
+        }
+        string capa = Path.Combine(Path.Combine(pasta, "Manifest"), "preview.png");
+        if (File.Exists(capa))
+        {
+            if (SteamUGC.SetItemPreview(h, capa)) Passo("Imagem de capa: " + capa);
+            else Passo("AVISO: a Steam nao aceitou a imagem de capa (os arquivos vao mesmo assim).");
         }
         handleDireto = h;
         estado = "Enviando para a Steam...";
