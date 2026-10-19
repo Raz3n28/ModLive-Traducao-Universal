@@ -44,7 +44,8 @@ internal static class LiveMenu
     // estilos do tema (cartoes, numeros grandes, etiquetas, links)
     private static GUIStyle sCartao, sCartaoTit, sCartaoDest, sCartaoDestTit, sCartaoDestTxt, sBloco, sNum, sNumDest, sValor, sLink, sLinkDest;
     private static GUIStyle sFechar, sSombra, sVazio, sInterruptor, sRotulo, sOrig, sNavTxt, sNavTxtSel, sNavFundo;
-    private static Texture2D texSombra, texBranco, texBolinha, texIntOff, texIntOn, texFaixa, texEtiqueta;
+    private static Texture2D texSombra, texBranco, texBolinha, texIntOff, texIntOn, texFaixa, texEtiqueta, texKofi;
+    private static GUIStyle sPeqCentro, sLinkCentro;
     // visual da proposta B: botoes planos arredondados, teal #2dd4bf no selecionado
     private static GUIStyle sBtn, sSel, sAmbar, sPerigo, sNav, sNavSel, sCampo, sMarcar, sBarra, sBarraPolegar;
     private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
@@ -474,6 +475,8 @@ internal static class LiveMenu
         Nav(6, "nav_log", "ic_log");
         Nav(7, "nav_fontes", "ic_fontes");
         GUILayout.FlexibleSpace();
+        // so aparece se a janela for alta o bastante (a mesma altura em todos os eventos: os IDs nao mudam)
+        if (texKofi != null && lat.height >= 790f) KoFi(lat.width - 24f);
         GUILayout.Label(LiveTxt.T("menu_idioma"), sPeq);
         int atual = LiveTxt.Atual;
         int novo = Escolha(atual, LiveTxt.Codigos, 3, lat.width - 24f);
@@ -483,6 +486,34 @@ internal static class LiveMenu
             LiveConfig.Marcar();
         }
         GUILayout.EndArea();
+    }
+
+    private const string UrlKoFi = "https://ko-fi.com/pauloraz3n";
+
+    // cartao "me apoie": QR code do Ko-fi (clicavel) e o texto no idioma do menu
+    private static void KoFi(float largura)
+    {
+        GUILayout.BeginVertical(sCartao);
+        GUILayout.Label(LiveTxt.T("kofi_titulo"), sCartaoTit);
+        Rect linha = GUILayoutUtility.GetRect(largura - 36f, 104f, sVazio, GUILayout.Height(104f));
+        Rect qr = new Rect(linha.x + (linha.width - 104f) / 2f, linha.y, 104f, 104f);
+        bool abrir = GUI.Button(qr, GUIContent.none, sVazio);
+        if (Event.current.type == EventType.Repaint)
+        {
+            Color antes = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, antes.a);
+            GUI.DrawTexture(qr, texKofi);
+            GUI.color = antes;
+        }
+        GUILayout.Label(LiveTxt.T("kofi_texto"), sPeqCentro);
+        if (GUILayout.Button("ko-fi.com/pauloraz3n", sLinkCentro)) abrir = true;
+        GUILayout.EndVertical();
+        GUILayout.Space(6f);
+        if (abrir)
+        {
+            try { Application.OpenURL(UrlKoFi); }
+            catch (Exception e) { LiveLog.Erro("le_parte", e, "open Ko-fi"); }
+        }
     }
 
     // Comecar / Pausar a traducao. O mod sempre abre pausado; o jogador comeca quando quiser.
@@ -2004,6 +2035,12 @@ internal static class LiveMenu
         sLink.fontStyle = FontStyle.Bold;
         sLink.wordWrap = false;
         sLink.stretchWidth = false;
+        sPeqCentro = new GUIStyle(sPeq);
+        sPeqCentro.alignment = TextAnchor.UpperCenter;
+        sLinkCentro = new GUIStyle(sLink);
+        sLinkCentro.alignment = TextAnchor.MiddleCenter;
+        sLinkCentro.stretchWidth = true;
+        sLinkCentro.fontSize = 12;
         sLinkDest = new GUIStyle(sLink);
         sLinkDest.normal.textColor = Tema.DestaqueTexto;
         sLinkDest.hover.textColor = Tema.DestaqueTexto;
@@ -2021,7 +2058,7 @@ internal static class LiveMenu
     {
         sContorno = sBtn;
         sJanela = sLateral = sSombra = null;
-        texLogo = texNome = texAlca = texSombra = texBranco = texBolinha = texIntOff = texIntOn = texFaixa = texEtiqueta = null;
+        texLogo = texNome = texAlca = texSombra = texBranco = texBolinha = texIntOff = texIntOn = texFaixa = texEtiqueta = texKofi = null;
         if (!Png.Existe) { LiveLog.Aviso("lg_ui_sem"); return; }
         Png.Fundos(sBtn, "sec", "sec_hover", "sec_press", 8);
         Png.Fundos(sSel, "pri", "pri_hover", "pri_press", 10);
@@ -2084,6 +2121,7 @@ internal static class LiveMenu
         texIntOn = Png.Tex("interruptor_on");
         texFaixa = Png.Tex("faixa");
         texEtiqueta = Png.Tex("etiqueta");
+        texKofi = Png.Tex("kofi");
     }
 
     // Durante o desenho da janela, os estilos padrao (usados pelos GUILayout.Button/TextField sem estilo)

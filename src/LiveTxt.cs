@@ -79,6 +79,8 @@ internal static class LiveTxt
     static LiveTxt()
     {
         // ---- aba Painel, temas, teclas e aparencia ----
+        A("kofi_titulo", "Me apoie", "Support me", "Apóyame", "Поддержать", "Soutenez-moi", "Unterstütze mich");
+        A("kofi_texto", "Gostou do mod? Me pague um café no Ko-fi!", "Enjoying the mod? Buy me a coffee on Ko-fi!", "¿Te gusta el mod? ¡Invítame un café en Ko-fi!", "Нравится мод? Угостите меня кофе на Ko-fi!", "Le mod vous plaît ? Offrez-moi un café sur Ko-fi !", "Gefällt dir die Mod? Spendier mir einen Kaffee auf Ko-fi!");
         A("nav_painel", "Painel", "Dashboard", "Panel", "Панель", "Tableau de bord", "Übersicht");
         A("st_ativa", "ATIVA", "ACTIVE", "ACTIVA", "РАБОТАЕТ", "ACTIVE", "AKTIV");
         A("st_pausada", "PAUSADA", "PAUSED", "PAUSADA", "ПАУЗА", "EN PAUSE", "PAUSIERT");

@@ -62,3 +62,6 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
 [ ] Painel > "Ultimas traducoes" > Editar num texto que nao e termo do glossario: hoje abre o "+ Novo termo"
     ja preenchido, mas com frase longa (varias linhas, com {0}) o Original aparece vazio e a Traducao enorme.
     So oferecer "Editar" para termos curtos (Glossario.Termo); frase longa abre so a busca.
+
+[x] QR code do Ko-fi na lateral do menu (cartao "Me apoie", texto no idioma do menu, clique abre
+    ko-fi.com/pauloraz3n). Aparece quando a janela tem altura para ele.
