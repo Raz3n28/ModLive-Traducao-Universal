@@ -51,3 +51,11 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
 [ ] Painel: tirar o destaque do cartao Glossario (todos os 6 cartoes iguais, sem fundo colorido).
 [ ] Painel, "Ultimas traducoes": nao mostrar quando a traducao e igual ao original (ex.: x15 -> x15, x3000 -> x3000)
     e alinhar a seta "->" com o texto (hoje fica um pouco acima).
+
+[ ] Glossario > "+ Novo termo": da para digitar nos campos Original e Traducao, mas a barrinha piscando
+    (cursor de texto) so aparece no campo Buscar. Investigar: os tres usam GUILayout.TextField com o mesmo
+    estilo (sCampo); ver cor do cursor (GUI.skin.settings.cursorColor), o recorte do campo e o foco
+    (GUIUtility.keyboardControl) com o skin trocado. Testar nos campos da aba Provedor e Categorias tambem.
+[ ] Painel > "Ultimas traducoes" > Editar num texto que nao e termo do glossario: hoje abre o "+ Novo termo"
+    ja preenchido, mas com frase longa (varias linhas, com {0}) o Original aparece vazio e a Traducao enorme.
+    So oferecer "Editar" para termos curtos (Glossario.Termo); frase longa abre so a busca.
