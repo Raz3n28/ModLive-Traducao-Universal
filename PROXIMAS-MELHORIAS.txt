@@ -36,3 +36,14 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
     do tema (sBtn / sSel, igual "Original do jogo" e as do Windows) e pinta o nome por cima com a cor do
     texto do tema (escolhida = cor do texto do destaque). Assim todos os botoes da aba ficam iguais em
     todos os temas, e o nome continua escrito na propria fonte.
+
+[ ] Aba "Interface" (com icone proprio): mexer na interface do proprio jogo, salvo no config.txt.
+    - escala geral da UI de 50% a 200% (multiplica o CanvasScaler de todos os Canvas do jogo);
+    - escala separada para HUD (barras de cima/baixo) e para janelas (inventario, personagem...);
+    - tamanho das fontes de 50% a 200%, so os textos (TMP_Text e UI.Text), sem mexer nas janelas;
+    - passos de 5% ou 10%; destacar os "nitidos" (50%, 100%, 200%) por causa da fonte pixelada;
+    - aviso quando passar de uns 70-75% para baixo (letra pode ficar ilegivel e o clique menor);
+    - muda ao vivo; botao "Voltar ao padrao" sempre visivel + tecla de atalho para resetar;
+    - reaplicar quando o jogo trocar de tela ou de resolucao (como a varredura de textos);
+    - nao afeta janelas IMGUI de outros mods (ex.: editor de personagens);
+    - conferir antes se o jogo ja tem escala de UI nas configuracoes (ai o mod so complementa).
