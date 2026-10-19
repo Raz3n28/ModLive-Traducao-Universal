@@ -921,7 +921,25 @@ internal static class LiveMenu
             catMsg = LiveTxt.F("cat_reclass_n", n);
             catMsgErro = false;
         }
+        // modo com chave: a IA decide a categoria dos termos nao travados (opcional, gasta tokens)
+        if (LiveConfig.ProvedorId != LiveConfig.IdGoogle)
+        {
+            if (!ClassificadorIA.Rodando)
+            {
+                if (GUILayout.Button(LiveTxt.T("cat_reclass_ia"), GUILayout.Width(220f)))
+                {
+                    catMsg = "";
+                    ClassificadorIA.Iniciar(LiveDriver.Instancia);
+                }
+            }
+            else if (GUILayout.Button(LiveTxt.T("cia_parar"), GUILayout.Width(220f))) ClassificadorIA.Parar();
+        }
         GUILayout.EndHorizontal();
+        if (LiveConfig.ProvedorId != LiveConfig.IdGoogle)
+        {
+            GUILayout.Label(LiveTxt.T("cat_reclass_ia_dica"), sPeq);
+            if (ClassificadorIA.Status.Length > 0) GUILayout.Label(ClassificadorIA.Status, ClassificadorIA.StatusErro ? sErro : sOk);
+        }
         if (catMsg.Length > 0) GUILayout.Label(catMsg, catMsgErro ? sErro : sOk);
     }
 

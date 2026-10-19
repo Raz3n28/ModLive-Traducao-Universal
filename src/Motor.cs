@@ -569,7 +569,8 @@ internal static class LiveMotor
         bool google = p.Tipo == 0;
         if (codigo == 200)
         {
-            List<string> trad = Provedores.Interpretar(p, lote, corpo, ep);
+            List<string> catsIA;
+            List<string> trad = Provedores.Interpretar(p, lote, corpo, ep, out catsIA);
             if (lote.Count > 1)
             {
                 if (trad != null) LotesOk++; else LotesFallback++;
@@ -606,7 +607,7 @@ internal static class LiveMotor
                         string pista;
                         pistas.TryGetValue(lote[i], out pista);
                         pistas.Remove(lote[i]);
-                        Glossario.Auto(lote[i], trad[i], pista);
+                        Glossario.Auto(lote[i], trad[i], pista, catsIA != null ? Categorias.PorNome(catsIA[i]) : -1);
                         LembrarRecente(lote[i], trad[i]);
                         Traduzidos++;
                     }

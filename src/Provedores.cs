@@ -29,18 +29,61 @@ internal static class Provedores
     // devolve null se a resposta nao for utilizavel
     public static List<string> Interpretar(Provedor p, List<string> textos, string corpo, int ep)
     {
+        List<string> cats;
+        return Interpretar(p, textos, corpo, ep, out cats);
+    }
+
+    // cats = categoria que a IA deu para cada texto ("" = frase), ou null se nao veio (Google, formato antigo)
+    public static List<string> Interpretar(Provedor p, List<string> textos, string corpo, int ep, out List<string> cats)
+    {
+        cats = null;
         int esperado = textos.Count;
         try
         {
             if (string.IsNullOrEmpty(corpo)) return null;
             if (p.Tipo == 0) return InterpretarGoogle(corpo, textos, ep);
-            object raiz = Json.Parse(corpo);
-            string conteudo;
-            if (p.Tipo == 2) conteudo = Json.Obter(raiz, "content", 0, "text") as string;
-            else conteudo = Json.Obter(raiz, "choices", 0, "message", "content") as string;
-            List<string> lista = ListaDeTextos(conteudo);
-            if (lista == null || lista.Count != esperado) return null;
+            List<string> lista = ListaDeTextos(Conteudo(p, corpo), out cats);
+            if (lista == null || lista.Count != esperado) { cats = null; return null; }
+            if (cats != null && cats.Count != esperado) cats = null;   // categorias erradas nao estragam a traducao
             return lista;
+        }
+        catch (Exception e)
+        {
+            LiveLog.Erro("le_parte", e, "read response");
+            return null;
+        }
+    }
+
+    // texto da resposta da IA (formato OpenAI ou Claude)
+    private static string Conteudo(Provedor p, string corpo)
+    {
+        object raiz = Json.Parse(corpo);
+        if (p.Tipo == 2) return Json.Obter(raiz, "content", 0, "text") as string;
+        return Json.Obter(raiz, "choices", 0, "message", "content") as string;
+    }
+
+    // ---------------- classificar termos com a IA (botao "Reclassificar com IA") ----------------
+
+    public static UnityWebRequest MontarClassificar(Provedor p, List<string> termos)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append("You classify short terms (names, items, buttons, titles...) of a sci-fi space station and fleet management game called 'Outer Space'. ");
+        sb.Append("The user sends a JSON array of terms; they may be Chinese, English or mixed. ");
+        sb.Append("For each term pick the best category from the list below. ");
+        sb.Append("Reply with ONLY a JSON array of category names copied exactly from the list, with exactly the same number of items and the same order as the input.");
+        sb.Append("\nCategories:").Append(Categorias.ListaParaIA(true));
+        return MontarIA(p, sb.ToString(), Json.ListaTextos(termos), Mathf.Clamp(256 + termos.Count * 12, 512, 4096));
+    }
+
+    // lista de categorias da resposta (null se o formato ou a quantidade nao bater)
+    public static List<string> InterpretarLista(Provedor p, string corpo, int esperado)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(corpo)) return null;
+            List<string> cats;
+            List<string> l = ListaDeTextos(Conteudo(p, corpo), out cats);
+            return l != null && l.Count == esperado ? l : null;
         }
         catch (Exception e)
         {
@@ -258,14 +301,27 @@ internal static class Provedores
 
     private static UnityWebRequest MontarOpenAI(Provedor p, List<string> textos)
     {
+        return MontarIA(p, PromptSistema(textos), Json.ListaTextos(textos), MaxTokens(textos));
+    }
+
+    private static UnityWebRequest MontarClaude(Provedor p, List<string> textos)
+    {
+        return MontarIA(p, PromptSistema(textos), Json.ListaTextos(textos), MaxTokens(textos));
+    }
+
+    // pedido para a IA (formato OpenAI ou Claude) com o prompt de sistema e a mensagem do usuario prontos.
+    // maxTokens so vai no Claude (la e obrigatorio).
+    private static UnityWebRequest MontarIA(Provedor p, string sistema, string usuario, int maxTokens)
+    {
+        if (p.Tipo == 2) return MontarClaudeIA(p, sistema, usuario, maxTokens);
         string url = LiveConfig.Url(p.Id).Trim().TrimEnd('/');
         if (!url.EndsWith("/chat/completions")) url += "/chat/completions";
 
         string modelo = LiveConfig.Modelo(p.Id).Trim();
         string json = "{\"model\":" + Json.Esc(modelo) + (AceitaTemperatura(modelo) ? ",\"temperature\":0.2" : "")
             + RaciocinioMinimo(p, modelo) + ",\"messages\":["
-            + "{\"role\":\"system\",\"content\":" + Json.Esc(PromptSistema(textos)) + "},"
-            + "{\"role\":\"user\",\"content\":" + Json.Esc(Json.ListaTextos(textos)) + "}]}";
+            + "{\"role\":\"system\",\"content\":" + Json.Esc(sistema) + "},"
+            + "{\"role\":\"user\",\"content\":" + Json.Esc(usuario) + "}]}";
         UnityWebRequest r = Post(url, json);
         string chave = LiveConfig.Chave(p.Id).Trim();
         if (chave.Length > 0) r.SetRequestHeader("Authorization", "Bearer " + chave);
@@ -321,12 +377,12 @@ internal static class Provedores
 
     // ---------------- Claude (Anthropic) ----------------
 
-    private static UnityWebRequest MontarClaude(Provedor p, List<string> textos)
+    private static UnityWebRequest MontarClaudeIA(Provedor p, string sistema, string usuario, int maxTokens)
     {
         string url = LiveConfig.Url(p.Id).Trim();
-        string json = "{\"model\":" + Json.Esc(LiveConfig.Modelo(p.Id).Trim()) + ",\"max_tokens\":" + MaxTokens(textos) + ",\"temperature\":0.2,"
-            + "\"system\":" + Json.Esc(PromptSistema(textos)) + ",\"messages\":["
-            + "{\"role\":\"user\",\"content\":" + Json.Esc(Json.ListaTextos(textos)) + "}]}";
+        string json = "{\"model\":" + Json.Esc(LiveConfig.Modelo(p.Id).Trim()) + ",\"max_tokens\":" + maxTokens + ",\"temperature\":0.2,"
+            + "\"system\":" + Json.Esc(sistema) + ",\"messages\":["
+            + "{\"role\":\"user\",\"content\":" + Json.Esc(usuario) + "}]}";
         UnityWebRequest r = Post(url, json);
         r.SetRequestHeader("x-api-key", LiveConfig.Chave(p.Id).Trim());
         r.SetRequestHeader("anthropic-version", "2023-06-01");
@@ -364,7 +420,18 @@ internal static class Provedores
         sb.Append("The source text may be Chinese, English or a mix of both. ");
         sb.Append("Hard rules: keep placeholders such as {0}, {1}, {2} and all markup tags EXACTLY unchanged and in the text; ");
         sb.Append("never add notes or explanations; if a string is already in the target language, return it unchanged. ");
-        sb.Append("Reply with ONLY a JSON array of strings, with exactly the same number of items and the same order as the input.");
+        // lote com termo curto (vai entrar no glossario): a IA tambem diz a categoria de cada um, e ja traduz
+        // seguindo a instrucao dessa categoria. Lote so com frases: formato simples (gasta menos).
+        bool comCategoria = TemTermo(textos);
+        if (comCategoria)
+        {
+            sb.Append("Reply with ONLY a JSON object {\"t\": [...], \"c\": [...]}. ");
+            sb.Append("\"t\" = the translations, with exactly the same number of items and the same order as the input. ");
+            sb.Append("\"c\" = for each input string, in the same order: if it is a short term (a name, item, weapon, skill, place, button, title...), ");
+            sb.Append("the name of its category copied exactly from the category list below; if it is a sentence or longer text, \"\".");
+        }
+        else
+            sb.Append("Reply with ONLY a JSON array of strings, with exactly the same number of items and the same order as the input.");
 
         int e = LiveConfig.Estilo;
         if (e < 0 || e >= LiveConfig.Estilos.Length) e = 0;
@@ -373,8 +440,14 @@ internal static class Provedores
         string extra = LiveConfig.PromptExtra;
         if (extra != null && extra.Trim().Length > 0)
             sb.Append("\nExtra instructions from the player (follow them, but the hard rules above always win): ").Append(extra.Trim());
-        string cats = Categorias.TextoPrompt();
-        if (cats.Length > 0) sb.Append("\n").Append(cats);
+        if (comCategoria)
+            sb.Append("\nCategories (for \"c\"). Translate each short term following its category's instruction; the hard rules above always win:")
+              .Append(Categorias.ListaParaIA(false));
+        else
+        {
+            string cats = Categorias.TextoPrompt();
+            if (cats.Length > 0) sb.Append("\n").Append(cats);
+        }
 
         // glossario: o mesmo nome traduzido do mesmo jeito tambem dentro de frases
         List<TermoGlossario> termos = Glossario.TermosEm(textos, 40, 1500);
@@ -396,15 +469,54 @@ internal static class Provedores
         return sb.ToString();
     }
 
+    private static bool TemTermo(List<string> textos)
+    {
+        if (textos == null) return false;
+        for (int i = 0; i < textos.Count; i++)
+            if (Glossario.Termo(textos[i])) return true;
+        return false;
+    }
+
     private static string UmaLinha(string s)
     {
         return (s ?? "").Replace("\r", " ").Replace("\n", " ");
     }
 
     // Tira cercas de codigo (```json) e le o primeiro array JSON de strings.
-    private static List<string> ListaDeTextos(string conteudo)
+    // Aceita os dois formatos: array de strings, ou objeto {"t": [...], "c": [...]} (traducoes + categorias).
+    private static List<string> ListaDeTextos(string conteudo, out List<string> cats)
     {
+        cats = null;
         if (conteudo == null) return null;
+        int chave = conteudo.IndexOf('{');
+        int colchete = conteudo.IndexOf('[');
+        if (chave >= 0 && (colchete < 0 || chave < colchete))
+        {
+            int fimObj = conteudo.LastIndexOf('}');
+            if (fimObj > chave)
+            {
+                Dictionary<string, object> obj = Json.Parse(conteudo.Substring(chave, fimObj - chave + 1)) as Dictionary<string, object>;
+                if (obj != null)
+                {
+                    List<object> t = Json.Obter(obj, "t") as List<object>;
+                    if (t == null) return null;
+                    List<string> r1 = new List<string>();
+                    for (int i = 0; i < t.Count; i++)
+                    {
+                        string s = t[i] as string;
+                        if (s == null) return null;
+                        r1.Add(s);
+                    }
+                    List<object> c = Json.Obter(obj, "c") as List<object>;
+                    if (c != null)
+                    {
+                        cats = new List<string>();
+                        for (int i = 0; i < c.Count; i++) cats.Add((c[i] as string) ?? "");
+                    }
+                    return r1;
+                }
+            }
+        }
         int ini = conteudo.IndexOf('[');
         int fim = conteudo.LastIndexOf(']');
         if (ini < 0 || fim <= ini) return null;

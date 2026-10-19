@@ -26,8 +26,12 @@ internal class LiveDriver : MonoBehaviour
     private float proximaFonte;
     private bool cenaNova;
 
+    // para quem precisa rodar uma corrotina fora do motor (ex.: ClassificadorIA, chamado pelo menu)
+    public static LiveDriver Instancia;
+
     private void Start()
     {
+        Instancia = this;
         try
         {
             aoMudar = AoMudarTexto;

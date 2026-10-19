@@ -112,12 +112,18 @@ internal static class Glossario
     // Chamado pelo motor quando uma traducao nova chega (ou sai do cache): se for um termo curto, entra no glossario.
     public static void Auto(string original, string traducao, string pista)
     {
+        Auto(original, traducao, pista, -1);
+    }
+
+    // catIA = categoria que a IA escolheu (modo com chave), -1 = nao veio
+    public static void Auto(string original, string traducao, string pista, int catIA)
+    {
         try
         {
             if (!Termo(original) || string.IsNullOrEmpty(traducao)) return;
             if (traducao.Length > 80 || traducao == original) return;
             if (mapa.ContainsKey(original)) return;
-            Criar(original, traducao, Categorizar(original, pista), false);
+            Criar(original, traducao, Categorizar(original, pista, catIA), false);
             Marcar();
         }
         catch { }
@@ -347,10 +353,18 @@ internal static class Glossario
     // pista = nomes do objeto de texto e dos pais na tela, em minusculas (ex.: "btn_ok/menu/")
     public static int Categorizar(string texto, string pista)
     {
+        return Categorizar(texto, pista, -1);
+    }
+
+    public static int Categorizar(string texto, string pista, int catIA)
+    {
         string p = pista ?? "";
         // 0) palavras-chave das categorias criadas pelo jogador (ganham de tudo)
         int c = Categorias.PorTexto(texto, 1);
         if (c >= 0) return c;
+
+        // 0b) modo com chave: a categoria que a IA escolheu (ela entende o que o termo e)
+        if (catIA >= 0 && Categorias.Existe(catIA)) return catIA;
 
         // 1) pista "de significado" no nome do objeto
         if (Tem(p, "faction")) return 1;

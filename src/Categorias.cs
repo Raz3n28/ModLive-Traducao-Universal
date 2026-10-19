@@ -386,6 +386,46 @@ internal static class Categorias
 
     // ---------------- prompt da IA ----------------
 
+    // Categoria pelo nome que a IA devolveu (nome em ingles das padrao, ou o nome no idioma do menu,
+    // ou o nome de uma categoria criada). -1 se vazio ou se nao achou.
+    public static int PorNome(string nome)
+    {
+        if (string.IsNullOrEmpty(nome)) return -1;
+        string n = nome.Trim();
+        if (n.Length == 0) return -1;
+        for (int i = 0; i < lista.Count; i++)
+        {
+            int id = lista[i].Id;
+            if (string.Equals(n, NomeIngles(id), StringComparison.OrdinalIgnoreCase)) return id;
+            if (string.Equals(n, Nome(id), StringComparison.OrdinalIgnoreCase)) return id;
+        }
+        return -1;
+    }
+
+    // Lista de TODAS as categorias para a IA escolher (nome exato a copiar + instrucao + exemplos).
+    // comExemplos = manda tambem as palavras-chave (ajuda a IA a entender categorias criadas pelo jogador).
+    public static string ListaParaIA(bool comExemplos)
+    {
+        StringBuilder sb = new StringBuilder();
+        int[] ordem = Ordem();
+        for (int k = 0; k < ordem.Length; k++)
+        {
+            CategoriaInfo c = Obter(ordem[k]);
+            if (c == null) continue;
+            sb.Append("\n- ").Append(NomeIngles(c.Id).Replace("\n", " "));
+            string ins = (c.Instrucao ?? "").Trim().Replace("\r", " ").Replace("\n", " ");
+            if (ins.Length > 0) sb.Append(": ").Append(ins);
+            else if (c.Id == 0) sb.Append(": use when no other category fits.");
+            if (comExemplos)
+            {
+                string pal = (c.Palavras ?? "").Trim().Replace("\r", " ").Replace("\n", " ");
+                if (pal.Length > 120) pal = pal.Substring(0, 120);
+                if (pal.Length > 0) sb.Append(" (examples: ").Append(pal).Append(")");
+            }
+        }
+        return sb.ToString();
+    }
+
     public static string TextoPrompt()
     {
         StringBuilder sb = new StringBuilder();
