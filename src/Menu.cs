@@ -45,7 +45,7 @@ internal static class LiveMenu
     private static GUIStyle sCartao, sCartaoTit, sCartaoDest, sCartaoDestTit, sCartaoDestTxt, sBloco, sNum, sNumDest, sValor, sLink, sLinkDest;
     private static GUIStyle sFechar, sSombra, sVazio, sInterruptor, sRotulo, sOrig, sNavTxt, sNavTxtSel, sNavFundo;
     private static Texture2D texSombra, texBranco, texBolinha, texIntOff, texIntOn, texFaixa, texEtiqueta, texKofi;
-    private static GUIStyle sPeqCentro, sLinkCentro;
+    private static GUIStyle sPeqCentro;
     // visual da proposta B: botoes planos arredondados, teal #2dd4bf no selecionado
     private static GUIStyle sBtn, sSel, sAmbar, sPerigo, sNav, sNavSel, sCampo, sMarcar, sBarra, sBarraPolegar;
     private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
@@ -490,7 +490,7 @@ internal static class LiveMenu
 
     private const string UrlKoFi = "https://ko-fi.com/pauloraz3n";
 
-    // cartao "me apoie": QR code do Ko-fi (clicavel) e o texto no idioma do menu
+    // cartao "me apoie": QR code do Ko-fi (clicar nele tambem abre a pagina) e o texto no idioma do menu
     private static void KoFi(float largura)
     {
         GUILayout.BeginVertical(sCartao);
@@ -506,7 +506,6 @@ internal static class LiveMenu
             GUI.color = antes;
         }
         GUILayout.Label(LiveTxt.T("kofi_texto"), sPeqCentro);
-        if (GUILayout.Button("ko-fi.com/pauloraz3n", sLinkCentro)) abrir = true;
         GUILayout.EndVertical();
         GUILayout.Space(6f);
         if (abrir)
@@ -2037,10 +2036,6 @@ internal static class LiveMenu
         sLink.stretchWidth = false;
         sPeqCentro = new GUIStyle(sPeq);
         sPeqCentro.alignment = TextAnchor.UpperCenter;
-        sLinkCentro = new GUIStyle(sLink);
-        sLinkCentro.alignment = TextAnchor.MiddleCenter;
-        sLinkCentro.stretchWidth = true;
-        sLinkCentro.fontSize = 12;
         sLinkDest = new GUIStyle(sLink);
         sLinkDest.normal.textColor = Tema.DestaqueTexto;
         sLinkDest.hover.textColor = Tema.DestaqueTexto;
