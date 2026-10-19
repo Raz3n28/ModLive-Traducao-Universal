@@ -7,7 +7,7 @@ Translates the game [b]in real time[/b], right inside the game.
 [*][b]Live translation[/b] into 18 languages.
 [*][b]Free mode[/b]: Google Translate, no key needed. Works right away, but it is [b]slower[/b] than using an API key (see below).
 [*][b]AI mode[/b]: use your own API key (DeepSeek, Gemini, Groq, OpenRouter, OpenAI, Claude, Ollama and others).
-[*][b]F8 menu[/b] in 6 languages (PT, EN, ES, RU, FR, DE) with tabs: General, Provider/API, Style, Glossary, Categories, Advanced.
+[*][b]F8 menu[/b] in 6 languages (PT, EN, ES, RU, FR, DE) with tabs: General, Provider/API, Style, Glossary, Categories, Advanced, Log, Fonts.
 [*][b]Translation style[/b] (faithful, natural, literal, very short) plus extra instructions for the AI.
 [*][b]Editable glossary[/b] with default and custom categories (keywords + AI instruction).
 [*][b]Consistent names[/b]: in AI mode, glossary terms are sent with each request, so names stay the same inside long sentences too.

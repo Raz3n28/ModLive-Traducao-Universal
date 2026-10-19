@@ -150,28 +150,34 @@ internal static class FonteEscolhida
         }
     }
 
-    // nome da escolha atual ("" = original do jogo)
-    public static string NomeAtual
-    {
-        get
-        {
-            if (!Ligada) return "";
-            Filtrar();
-            for (int i = 1; i < filtradas.Count; i++)
-                if (filtradas[i].Caminho == LiveConfig.FonteTrad) return filtradas[i].Nome;
-            return Path.GetFileNameWithoutExtension(LiveConfig.FonteTrad);
-        }
-    }
-
-    // botoes < > do menu
-    public static void Passo(int d)
+    // aba Fontes do menu: nome e caminho de cada opcao da lista filtrada (0 = original do jogo, nome "")
+    public static string Nome(int i)
     {
         Filtrar();
-        int n = filtradas.Count;
-        int i = Indice;
-        if (i < 0) i = 0;
-        i = ((i + d) % n + n) % n;
-        Escolher(filtradas[i].Caminho);
+        return i > 0 && i < filtradas.Count ? filtradas[i].Nome : "";
+    }
+
+    public static void Escolher(int i)
+    {
+        Filtrar();
+        if (i >= 0 && i < filtradas.Count) Escolher(filtradas[i].Caminho);
+    }
+
+    // a fonte so para desenhar o nome dela no botao (Font do Unity e leve; o TMP_FontAsset so e criado na escolhida)
+    private static readonly Dictionary<string, Font> previas = new Dictionary<string, Font>();
+
+    public static Font Previa(int i)
+    {
+        Filtrar();
+        if (i <= 0 || i >= filtradas.Count) return null;
+        string cam = filtradas[i].Caminho;
+        Font f;
+        if (previas.TryGetValue(cam, out f)) return f;
+        f = null;
+        try { f = new Font(cam); }
+        catch (Exception e) { LiveLog.Erro("le_fonte", e, cam); }
+        previas[cam] = f;
+        return f;
     }
 
     public static void Escolher(string caminho)

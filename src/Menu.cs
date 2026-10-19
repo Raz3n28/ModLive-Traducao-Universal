@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Menu dentro do jogo (IMGUI). Abre pelo botao no canto da tela ou pela tecla F8.
-// Visual "painel lateral": abas Geral, Provedor/API, Estilo, Glossario e Avancado.
+// Visual "painel lateral": abas Geral, Provedor/API, Estilo, Glossario, Categorias, Avancado, Log e Fontes.
 // Textos em 6 idiomas (LiveTxt). So usa funcoes de IMGUI que existem nas DLLs cortadas do jogo.
 internal static class LiveMenu
 {
@@ -166,6 +166,7 @@ internal static class LiveMenu
             case 4: PaginaCategorias(); break;
             case 5: PaginaAvancado(); break;
             case 6: PaginaLog(); break;
+            case 7: PaginaFontes(); break;
             default: PaginaGeral(); break;
         }
         GUILayout.EndScrollView();
@@ -184,6 +185,7 @@ internal static class LiveMenu
             case 4: return LiveTxt.T("nav_cats");
             case 5: return LiveTxt.T("nav_avanc");
             case 6: return LiveTxt.T("nav_log");
+            case 7: return LiveTxt.T("nav_fontes");
             default: return LiveTxt.T("nav_geral");
         }
     }
@@ -204,6 +206,7 @@ internal static class LiveMenu
         Nav(4, "nav_cats");
         Nav(5, "nav_avanc");
         Nav(6, "nav_log");
+        Nav(7, "nav_fontes");
         GUILayout.FlexibleSpace();
         GUILayout.Label(LiveTxt.T("menu_idioma"), sPeq);
         int atual = LiveTxt.Atual;
@@ -1102,25 +1105,6 @@ internal static class LiveMenu
         GUILayout.Label(LiveTxt.T("fonte_min_dica"), sPeq);
         GUILayout.Space(8f);
 
-        // fonte dos textos traduzidos (so as que tem as letras do idioma)
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(LiveTxt.T("fonte_trad"), GUILayout.Width(250f));
-        if (GUILayout.Button("<", GUILayout.Width(28f))) FonteEscolhida.Passo(-1);
-        string nomeFonte = FonteEscolhida.NomeAtual;
-        GUILayout.Label(nomeFonte.Length == 0 ? LiveTxt.T("fonte_original") : nomeFonte, sCab, GUILayout.Width(210f));
-        if (GUILayout.Button(">", GUILayout.Width(28f))) FonteEscolhida.Passo(1);
-        GUILayout.FlexibleSpace();
-        GUILayout.EndHorizontal();
-        GUILayout.Label(LiveTxt.F("fonte_trad_dica", FonteEscolhida.Quantas - 1), sPeq);
-        GUILayout.BeginHorizontal();
-        if (GUILayout.Button(LiveTxt.T("fonte_pasta"), GUILayout.Height(24f), GUILayout.Width(160f)))
-        {
-            try { Application.OpenURL("file:///" + FonteEscolhida.PastaUsuario.Replace('\\', '/')); }
-            catch (Exception e) { LiveLog.Erro("le_parte", e, "open folder"); }
-        }
-        if (GUILayout.Button(LiveTxt.T("fonte_atualizar"), GUILayout.Height(24f), GUILayout.Width(160f))) FonteEscolhida.Recarregar();
-        GUILayout.FlexibleSpace();
-        GUILayout.EndHorizontal();
         GUILayout.Space(10f);
 
         // pre-traduzir o que ja esta carregado (menus e janelas escondidos)
@@ -1191,6 +1175,62 @@ internal static class LiveMenu
         if (confLimpar) GUILayout.Label(LiveTxt.F("limpar_aviso", TradCache.Total), sErro);
         GUILayout.Space(10f);
         GUILayout.Label(LiveTxt.T("aviso_teclas"), sPeq);
+    }
+
+    // ---------------- aba 8: Fontes ----------------
+
+    // botao de cada fonte escrito com a propria fonte (estilo copiado do botao normal, so troca a fonte)
+    private static readonly Dictionary<Font, GUIStyle> estilosFonte = new Dictionary<Font, GUIStyle>();
+
+    private static GUIStyle EstiloFonte(Font f)
+    {
+        if (f == null) return GUI.skin.button;
+        GUIStyle e;
+        if (!estilosFonte.TryGetValue(f, out e))
+        {
+            e = new GUIStyle(GUI.skin.button);
+            e.font = f;
+            e.fontSize = 17;
+            estilosFonte[f] = e;
+        }
+        return e;
+    }
+
+    private static void PaginaFontes()
+    {
+        GUILayout.Label(LiveTxt.F("fonte_trad_dica", FonteEscolhida.Quantas - 1), sPeq);
+        GUILayout.Space(6f);
+
+        int sel = FonteEscolhida.Indice;
+        int n = FonteEscolhida.Quantas;
+        const int cols = 3;
+        float bw = Mathf.Floor((larguraUtil - 4f * (cols - 1)) / cols);
+        Color antes = GUI.backgroundColor;
+        for (int i = 0; i < n; i += cols)
+        {
+            GUILayout.BeginHorizontal();
+            for (int j = i; j < i + cols && j < n; j++)
+            {
+                GUI.backgroundColor = j == sel ? Teal : antes;
+                string nome = j == 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(j);
+                if (GUILayout.Button(nome, EstiloFonte(FonteEscolhida.Previa(j)), GUILayout.Width(bw), GUILayout.Height(34f)))
+                    FonteEscolhida.Escolher(j);
+            }
+            GUILayout.EndHorizontal();
+        }
+        GUI.backgroundColor = antes;
+
+        GUILayout.Space(10f);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(LiveTxt.T("fonte_pasta"), GUILayout.Height(28f), GUILayout.Width(180f)))
+        {
+            try { Application.OpenURL("file:///" + FonteEscolhida.PastaUsuario.Replace('\\', '/')); }
+            catch (Exception e) { LiveLog.Erro("le_parte", e, "open folder"); }
+        }
+        if (GUILayout.Button(LiveTxt.T("fonte_atualizar"), GUILayout.Height(28f), GUILayout.Width(180f))) FonteEscolhida.Recarregar();
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_pasta_dica"), sPeq);
     }
 
     // ---------------- aba 7: Log ----------------
