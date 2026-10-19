@@ -74,6 +74,7 @@ internal static class Categorias
             CategoriaInfo c = new CategoriaInfo();
             c.Id = i;
             c.Palavras = PalavrasPadrao(i);
+            c.Instrucao = InstrucaoPadrao(i);
             Adicionar(c);
         }
 
@@ -83,6 +84,11 @@ internal static class Categorias
             try
             {
                 string[] linhas = File.ReadAllLines(arq, Encoding.UTF8);
+                // arquivo de antes das instrucoes padrao (sem a linha #instrucoes): instrucao vazia numa
+                // categoria padrao vira a instrucao padrao. Depois disso, vazio e escolha do jogador.
+                bool temMarca = false;
+                for (int i = 0; i < linhas.Length; i++)
+                    if (linhas[i].StartsWith("#instrucoes", StringComparison.Ordinal)) temMarca = true;
                 for (int i = 0; i < linhas.Length; i++)
                 {
                     string[] p = linhas[i].Split('\t');
@@ -116,7 +122,7 @@ internal static class Categorias
                         if (id >= proximoId) proximoId = id + 1;
                     }
                     c.Palavras = pal;
-                    c.Instrucao = ins;
+                    c.Instrucao = (!temMarca && id < NumBase && ins.Trim().Length == 0) ? InstrucaoPadrao(id) : ins;
                 }
             }
             catch (Exception e)
@@ -154,6 +160,7 @@ internal static class Categorias
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("#proximo\t").Append(proximoId).Append('\n');
+            sb.Append("#instrucoes\t1\n");
             for (int i = 0; i < lista.Count; i++)
             {
                 CategoriaInfo c = lista[i];
@@ -284,7 +291,7 @@ internal static class Categorias
         CategoriaInfo c = Obter(id);
         if (c == null) return;
         c.Palavras = c.Padrao ? PalavrasPadrao(id) : "";
-        c.Instrucao = "";
+        c.Instrucao = c.Padrao ? InstrucaoPadrao(id) : "";
         Marcar();
     }
 
@@ -396,6 +403,24 @@ internal static class Categorias
     }
 
     // ---------------- padroes ----------------
+
+    // instrucao de fabrica para a IA (so modo com chave). Em ingles porque vai no pedido junto com as regras fixas,
+    // e vale para qualquer idioma de destino. Maximo MaxInstrucao (150) letras cada.
+    public static string InstrucaoPadrao(int id)
+    {
+        switch (id)
+        {
+            case 1: return "Faction names: translate generic words (alliance, guild, army), keep invented proper names. Same faction = same translation.";
+            case 2: return "Item names: short noun phrase, no articles. Keep model codes, numbers and invented brand names unchanged.";
+            case 3: return "Weapon names: concise, use the usual military/sci-fi terms of the target language. Keep model codes (e.g. MK-II) unchanged.";
+            case 4: return "Skill names: short and punchy, like a game ability name. No full sentences.";
+            case 5: return "Station and place names: keep the proper name, translate only the generic part (station, port, base, dock).";
+            case 6: return "Names of people and ships: do not translate the meaning. Keep Latin names as is; romanize others (e.g. Chinese to pinyin).";
+            case 7: return "Button labels: as short as possible (1-2 words). Use the imperative/infinitive usual for game buttons in the target language.";
+            case 8: return "Window and section titles: short, no final period.";
+            default: return "";
+        }
+    }
 
     // palavras-chave de fabrica das categorias padrao (as mesmas que antes eram fixas no codigo)
     public static string PalavrasPadrao(int id)
