@@ -34,14 +34,16 @@ internal static class LiveMotor
     private const int MaxRecentes = 3;
 
     private const int MaxEmVoo = 3;
-    // Google gratis (endpoint nao oficial): pouco pedido por vez e ritmo baixo, senao responde 429
-    public const int GoogleMaxRpm = 20;
+    // Google gratis (endpoint nao oficial): um pedido por vez (como o XUnity). Sem intervalo fixo: o proximo
+    // sai assim que o anterior volta, so com esta folga minima. Se der 429, o endereco fica de castigo e o
+    // motor passa para o proximo endereco (ver Castigar).
+    public const float GoogleIntervalo = 0.3f;
     // e cada pedido leva varios textos juntos (um por linha, como o XUnity), em vez de um so
     public const int GoogleLote = 10;
     public const int GoogleMaxChars = 800;      // por pedido (vai na URL, entao nao pode ser grande)
     public const int GoogleMaxTexto = 200;      // texto maior que isso vai sozinho num pedido
-    public const float GoogleEspera = 0.9f;     // espera a tela "parar" antes de enviar (junta mais textos no lote)
-    public const float GoogleEsperaMax = 3f;    // mas nunca espera mais que isso
+    public const float GoogleEspera = 0.4f;     // espera a tela "parar" antes de enviar (junta mais textos no lote)
+    public const float GoogleEsperaMax = 1.5f;  // mas nunca espera mais que isso
     private static float ultimaEntrada;
     private static float inicioEspera;
     public static int LotesOk;
@@ -418,7 +420,7 @@ internal static class LiveMotor
             return;
         }
 
-        // Google: so envia quando o lote encheu, ou a tela ficou 0,9 s sem texto novo, ou ja esperou 3 s
+        // Google: so envia quando o lote encheu, ou a tela ficou 0,4 s sem texto novo, ou ja esperou 1,5 s
         if (p.Tipo == 0 && !reTrad && fila.Count < GoogleLote
             && agora - ultimaEntrada < GoogleEspera && agora - inicioEspera < GoogleEsperaMax) return;
 
@@ -457,9 +459,8 @@ internal static class LiveMotor
         }
         if (lote.Count == 0) return;
 
-        int rpm = Mathf.Max(1, LiveConfig.Rpm);
-        if (p.Tipo == 0 && rpm > GoogleMaxRpm) rpm = GoogleMaxRpm;
-        proximoEnvio = agora + 60f / rpm;
+        if (p.Tipo == 0) proximoEnvio = agora + GoogleIntervalo;
+        else proximoEnvio = agora + 60f / Mathf.Max(1, LiveConfig.Rpm);
         emVoo++;
         Pedidos++;
         drv.StartCoroutine(Enviar(p, lote, geracao, ep));

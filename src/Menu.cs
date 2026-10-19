@@ -1012,29 +1012,25 @@ internal static class LiveMenu
     private static void PaginaAvancado()
     {
         bool gratis = LiveConfig.ProvedorId == LiveConfig.IdGoogle;
-        int maxRpm = gratis ? LiveMotor.GoogleMaxRpm : 600;
-        if (LiveConfig.Rpm > maxRpm)
-        {
-            LiveConfig.Rpm = maxRpm;
-            campoRpm = maxRpm.ToString();
-            LiveConfig.Marcar();
-        }
+        int maxRpm = 600;
 
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(LiveTxt.T("rpm"), GUILayout.Width(170f));
-        if (GUILayout.Button("-", GUILayout.Width(28f))) MudarRpm(-5, maxRpm);
-        string nrpm = GUILayout.TextField(campoRpm, GUILayout.Width(60f));
-        if (nrpm != campoRpm)
+        // modo gratis: o ritmo e automatico (um pedido por vez); pedidos por minuto e lote so valem para IA
+        if (gratis) GUILayout.Label(LiveTxt.T("rpm_gratis"), sPeq);
+        else
         {
-            campoRpm = nrpm;
-            int v;
-            if (int.TryParse(nrpm, out v)) { LiveConfig.Rpm = Mathf.Clamp(v, 1, maxRpm); LiveConfig.Marcar(); }
-        }
-        if (GUILayout.Button("+", GUILayout.Width(28f))) MudarRpm(5, maxRpm);
-        GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(LiveTxt.T("rpm"), GUILayout.Width(170f));
+            if (GUILayout.Button("-", GUILayout.Width(28f))) MudarRpm(-5, maxRpm);
+            string nrpm = GUILayout.TextField(campoRpm, GUILayout.Width(60f));
+            if (nrpm != campoRpm)
+            {
+                campoRpm = nrpm;
+                int v;
+                if (int.TryParse(nrpm, out v)) { LiveConfig.Rpm = Mathf.Clamp(v, 1, maxRpm); LiveConfig.Marcar(); }
+            }
+            if (GUILayout.Button("+", GUILayout.Width(28f))) MudarRpm(5, maxRpm);
+            GUILayout.EndHorizontal();
 
-        if (!gratis)
-        {
             GUILayout.BeginHorizontal();
             GUILayout.Label(LiveTxt.T("lote"), GUILayout.Width(170f));
             string nlote = GUILayout.TextField(campoLote, GUILayout.Width(60f));
@@ -1045,8 +1041,8 @@ internal static class LiveMenu
                 if (int.TryParse(nlote, out v2)) { LiveConfig.Lote = Mathf.Clamp(v2, 1, 30); LiveConfig.Marcar(); }
             }
             GUILayout.EndHorizontal();
+            GUILayout.Label(LiveTxt.T("rpm_aviso"), sPeq);
         }
-        GUILayout.Label(LiveTxt.T("rpm_aviso"), sPeq);
         GUILayout.Space(8f);
 
         bool botao = Marca(LiveConfig.BotaoVisivel, LiveTxt.T("botao_canto"));
