@@ -55,7 +55,12 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
 [ ] Glossario > "+ Novo termo": da para digitar nos campos Original e Traducao, mas a barrinha piscando
     (cursor de texto) so aparece no campo Buscar. Investigar: os tres usam GUILayout.TextField com o mesmo
     estilo (sCampo); ver cor do cursor (GUI.skin.settings.cursorColor), o recorte do campo e o foco
-    (GUIUtility.keyboardControl) com o skin trocado. Testar nos campos da aba Provedor e Categorias tambem.
+    (GUIUtility.keyboardControl) com o skin trocado.
+    Confirmado tambem na aba Categorias (Palavras-chave e Instrucao para a IA): digita, mas sem cursor e sem
+    a borda colorida de "campo ativo" (que o Buscar mostra). Pista forte: no Repaint o IMGUI nao acha o campo
+    como focado = o numero de controle (control ID) muda entre os eventos. Procurar controles que so existem
+    em alguns eventos (ex.: GUI.Box do fundo da aba so no Repaint, em Lateral) e trocar por desenho sem ID
+    (GUI.DrawTexture / style.Draw) ou chamar sempre, em todos os eventos.
 [ ] Painel > "Ultimas traducoes" > Editar num texto que nao e termo do glossario: hoje abre o "+ Novo termo"
     ja preenchido, mas com frase longa (varias linhas, com {0}) o Original aparece vazio e a Traducao enorme.
     So oferecer "Editar" para termos curtos (Glossario.Termo); frase longa abre so a busca.
