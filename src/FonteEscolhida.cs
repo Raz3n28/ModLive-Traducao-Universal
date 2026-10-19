@@ -163,23 +163,6 @@ internal static class FonteEscolhida
         if (i >= 0 && i < filtradas.Count) Escolher(filtradas[i].Caminho);
     }
 
-    // a fonte so para desenhar o nome dela no botao (Font do Unity e leve; o TMP_FontAsset so e criado na escolhida)
-    private static readonly Dictionary<string, Font> previas = new Dictionary<string, Font>();
-
-    public static Font Previa(int i)
-    {
-        Filtrar();
-        if (i <= 0 || i >= filtradas.Count) return null;
-        string cam = filtradas[i].Caminho;
-        Font f;
-        if (previas.TryGetValue(cam, out f)) return f;
-        f = null;
-        try { f = new Font(cam); }
-        catch (Exception e) { LiveLog.Erro("le_fonte", e, cam); }
-        previas[cam] = f;
-        return f;
-    }
-
     public static void Escolher(string caminho)
     {
         if ((caminho ?? "") == (LiveConfig.FonteTrad ?? "")) return;
@@ -389,21 +372,11 @@ internal static class FonteEscolhida
         catch (Exception e) { LiveLog.Erro("le_parte", e, "set font"); }
     }
 
+    // Texto do Unity antigo (UI.Text) fica com a fonte do jogo: no teste, uma Font carregada de arquivo
+    // nao desenhou nada no texto antigo (o menu IMGUI, que usa o mesmo desenho, ficou com os botoes vazios).
     public static void Trocar(Text t)
     {
-        try
-        {
-            if (!t) return;
-            if (!Ligada) { Devolver(t); return; }
-            if (!Carregar() || fonte == null || t.font == fonte) return;
-            if (!origUi.ContainsKey(t))
-            {
-                if (origUi.Count > 3000) LimparMortos();
-                origUi[t] = t.font;
-            }
-            t.font = fonte;
-        }
-        catch (Exception e) { LiveLog.Erro("le_parte", e, "set font"); }
+        Devolver(t);
     }
 
     public static void Devolver(TMP_Text t)

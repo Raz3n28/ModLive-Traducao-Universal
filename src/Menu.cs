@@ -1179,23 +1179,6 @@ internal static class LiveMenu
 
     // ---------------- aba 8: Fontes ----------------
 
-    // botao de cada fonte escrito com a propria fonte (estilo copiado do botao normal, so troca a fonte)
-    private static readonly Dictionary<Font, GUIStyle> estilosFonte = new Dictionary<Font, GUIStyle>();
-
-    private static GUIStyle EstiloFonte(Font f)
-    {
-        if (f == null) return GUI.skin.button;
-        GUIStyle e;
-        if (!estilosFonte.TryGetValue(f, out e))
-        {
-            e = new GUIStyle(GUI.skin.button);
-            e.font = f;
-            e.fontSize = 17;
-            estilosFonte[f] = e;
-        }
-        return e;
-    }
-
     private static void PaginaFontes()
     {
         GUILayout.Label(LiveTxt.F("fonte_trad_dica", FonteEscolhida.Quantas - 1), sPeq);
@@ -1213,7 +1196,7 @@ internal static class LiveMenu
             {
                 GUI.backgroundColor = j == sel ? Teal : antes;
                 string nome = j == 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(j);
-                if (GUILayout.Button(nome, EstiloFonte(FonteEscolhida.Previa(j)), GUILayout.Width(bw), GUILayout.Height(34f)))
+                if (GUILayout.Button(nome, GUILayout.Width(bw), GUILayout.Height(30f)))
                     FonteEscolhida.Escolher(j);
             }
             GUILayout.EndHorizontal();
