@@ -78,6 +78,61 @@ internal static class LiveTxt
 
     static LiveTxt()
     {
+        // ---- aba Painel, temas, teclas e aparencia ----
+        A("nav_painel", "Painel", "Dashboard", "Panel", "Панель", "Tableau de bord", "Übersicht");
+        A("st_ativa", "ATIVA", "ACTIVE", "ACTIVA", "РАБОТАЕТ", "ACTIVE", "AKTIV");
+        A("st_pausada", "PAUSADA", "PAUSED", "PAUSADA", "ПАУЗА", "EN PAUSE", "PAUSIERT");
+        A("st_erro", "ERRO", "ERROR", "ERROR", "ОШИБКА", "ERREUR", "FEHLER");
+        A("st_sub_ativa", "Tradução em tempo real", "Real-time translation", "Traducción en tiempo real", "Перевод в реальном времени", "Traduction en temps réel", "Echtzeit-Übersetzung");
+        A("st_sub_pausada", "A tradução está pausada", "Translation is paused", "La traducción está en pausa", "Перевод приостановлен", "La traduction est en pause", "Übersetzung pausiert");
+        A("fila_n", "{0} na fila", "{0} in queue", "{0} en cola", "в очереди: {0}", "{0} en file", "{0} in Warteschlange");
+        A("pn_hoje", "Traduzidos hoje", "Translated today", "Traducidos hoy", "Переведено сегодня", "Traduits aujourd'hui", "Heute übersetzt");
+        A("pn_cache", "Em cache", "In cache", "En caché", "В кэше", "En cache", "Im Cache");
+        A("pn_pedmin", "Pedidos/min", "Requests/min", "Solicitudes/min", "Запросов/мин", "Requêtes/min", "Anfragen/Min");
+        A("pn_de", "de {0}", "of {0}", "de {0}", "из {0}", "sur {0}", "von {0}");
+        A("pn_glos", "Glossário", "Glossary", "Glosario", "Глоссарий", "Glossaire", "Glossar");
+        A("pn_estado", "Estado", "Status", "Estado", "Состояние", "État", "Status");
+        A("pn_limite", "Limite de pedidos por minuto", "Requests per minute limit", "Límite de solicitudes por minuto", "Лимит запросов в минуту", "Limite de requêtes par minute", "Anfragelimit pro Minute");
+        A("pn_limite_gratis", "No modo grátis o ritmo é automático (um pedido por vez).", "In free mode the pace is automatic (one request at a time).", "En modo gratis el ritmo es automático (una solicitud a la vez).", "В бесплатном режиме темп автоматический (по одному запросу).", "En mode gratuit, le rythme est automatique (une requête à la fois).", "Im Gratis-Modus ist das Tempo automatisch (eine Anfrage nach der anderen).");
+        A("pn_cache_disco", "Cache em disco", "Disk cache", "Caché en disco", "Кэш на диске", "Cache disque", "Festplatten-Cache");
+        A("pn_ativado", "Ativado", "Enabled", "Activado", "Включён", "Activé", "Aktiv");
+        A("pn_modo", "Modo e provedor", "Mode and provider", "Modo y proveedor", "Режим и сервис", "Mode et service", "Modus und Anbieter");
+        A("pn_gratis_sub", "Google Tradutor, sem chave", "Google Translate, no key", "Google Traductor, sin clave", "Google Переводчик, без ключа", "Google Traduction, sans clé", "Google Übersetzer, ohne Schlüssel");
+        A("pn_api_sub", "Com chave de API", "With API key", "Con clave de API", "С ключом API", "Avec clé API", "Mit API-Schlüssel");
+        A("pn_idioma", "Idioma de destino", "Target language", "Idioma de destino", "Язык перевода", "Langue cible", "Zielsprache");
+        A("pn_idioma_sub", "Idioma em que o jogo aparece", "Language the game is shown in", "Idioma en que aparece el juego", "Язык, на котором идёт игра", "Langue d'affichage du jeu", "Sprache, in der das Spiel erscheint");
+        A("pn_estilo", "Estilo", "Style", "Estilo", "Стиль", "Style", "Stil");
+        A("pn_estilo_sub", "Instruções extras · {0}/{1}", "Extra instructions · {0}/{1}", "Instrucciones extra · {0}/{1}", "Доп. инструкции · {0}/{1}", "Instructions en plus · {0}/{1}", "Zusatzanweisungen · {0}/{1}");
+        A("pn_estilo_gratis", "Só no modo com chave", "Key mode only", "Solo en modo con clave", "Только с ключом", "Mode avec clé seulement", "Nur im Schlüsselmodus");
+        A("pn_termos", "{0} termos", "{0} terms", "{0} términos", "терминов: {0}", "{0} termes", "{0} Begriffe");
+        A("pn_termos_sub", "{0} categorias · {1} travados", "{0} categories · {1} locked", "{0} categorías · {1} bloqueados", "категорий: {0} · закреплено: {1}", "{0} catégories · {1} verrouillés", "{0} Kategorien · {1} gesperrt");
+        A("pn_cache_card", "Cache e limite", "Cache and limit", "Caché y límite", "Кэш и лимит", "Cache et limite", "Cache und Limit");
+        A("pn_rpm_val", "{0} pedidos/min", "{0} requests/min", "{0} solicitudes/min", "{0} запросов/мин", "{0} requêtes/min", "{0} Anfragen/Min");
+        A("pn_ritmo_auto", "Ritmo automático", "Automatic pace", "Ritmo automático", "Авто-темп", "Rythme automatique", "Automatisches Tempo");
+        A("pn_cache_sub", "{0} textos salvos no disco", "{0} texts saved on disk", "{0} textos guardados en disco", "текстов на диске: {0}", "{0} textes enregistrés", "{0} Texte gespeichert");
+        A("pn_fontes", "Fontes", "Fonts", "Fuentes", "Шрифты", "Polices", "Schriften");
+        A("pn_fontes_sub", "Fonte da tradução", "Translation font", "Fuente de la traducción", "Шрифт перевода", "Police de la traduction", "Schrift der Übersetzung");
+        A("pn_abrir", "Abrir ›", "Open ›", "Abrir ›", "Открыть ›", "Ouvrir ›", "Öffnen ›");
+        A("pn_ultimas", "Últimas traduções", "Latest translations", "Últimas traducciones", "Последние переводы", "Dernières traductions", "Letzte Übersetzungen");
+        A("pn_ultimas_vazio", "Nada traduzido ainda nesta sessão.", "Nothing translated yet this session.", "Nada traducido aún en esta sesión.", "В этой сессии ещё ничего не переведено.", "Rien de traduit pour l'instant.", "In dieser Sitzung noch nichts übersetzt.");
+        A("av_ritmo", "Ritmo", "Pace", "Ritmo", "Темп", "Rythme", "Tempo");
+        A("av_opcoes", "Opções", "Options", "Opciones", "Параметры", "Options", "Optionen");
+        A("av_ferr", "Ferramentas", "Tools", "Herramientas", "Инструменты", "Outils", "Werkzeuge");
+        A("av_cache", "Cache", "Cache", "Caché", "Кэш", "Cache", "Cache");
+        A("av_aparencia", "Aparência", "Appearance", "Apariencia", "Внешний вид", "Apparence", "Aussehen");
+        A("av_teclas", "Teclas", "Keys", "Teclas", "Клавиши", "Touches", "Tasten");
+        A("tema", "Tema", "Theme", "Tema", "Тема", "Thème", "Design");
+        A("opacidade", "Transparência do menu", "Menu opacity", "Opacidad del menú", "Непрозрачность меню", "Opacité du menu", "Deckkraft des Menüs");
+        A("botao_resetar", "Voltar o botão para o canto", "Move the button back to the corner", "Devolver el botón a la esquina", "Вернуть кнопку в угол", "Remettre le bouton dans le coin", "Schaltfläche zurück in die Ecke");
+        A("botao_dica", "Arraste o botão 'Tradução' para mudar ele de lugar.", "Drag the 'Translation' button to move it.", "Arrastra el botón 'Traducción' para moverlo.", "Перетащите кнопку «Перевод», чтобы переместить её.", "Faites glisser le bouton « Traduction » pour le déplacer.", "Ziehe die Schaltfläche „Übersetzung“, um sie zu verschieben.");
+        A("tecla_menu", "Abrir / fechar o menu", "Open / close the menu", "Abrir / cerrar el menú", "Открыть / закрыть меню", "Ouvrir / fermer le menu", "Menü öffnen / schließen");
+        A("tecla_pausa", "Pausar / continuar a tradução", "Pause / resume translating", "Pausar / continuar la traducción", "Пауза / продолжить перевод", "Pause / reprise de la traduction", "Übersetzung pausieren / fortsetzen");
+        A("tecla_trocar", "Trocar", "Change", "Cambiar", "Изменить", "Changer", "Ändern");
+        A("tecla_sem", "Sem tecla", "No key", "Sin tecla", "Без клавиши", "Aucune touche", "Keine Taste");
+        A("tecla_nenhuma", "(nenhuma)", "(none)", "(ninguna)", "(нет)", "(aucune)", "(keine)");
+        A("tecla_aperte", "Aperte uma tecla... (Esc cancela)", "Press a key... (Esc cancels)", "Pulsa una tecla... (Esc cancela)", "Нажмите клавишу... (Esc — отмена)", "Appuyez sur une touche... (Échap annule)", "Taste drücken... (Esc bricht ab)");
+        A("tecla_repetida", "Essa tecla já está em uso no outro atalho.", "That key is already used by the other shortcut.", "Esa tecla ya se usa en el otro atajo.", "Эта клавиша уже занята другим действием.", "Cette touche est déjà utilisée par l'autre raccourci.", "Diese Taste ist schon für die andere Funktion belegt.");
+
         // ---- barra lateral / geral ----
         A("brand_sub", "Tradução ao vivo", "Live translation", "Traducción en vivo", "Перевод в реальном времени", "Traduction en direct", "Live-Übersetzung");
         A("nav_geral", "Geral", "General", "General", "Общие", "Général", "Allgemein");
@@ -159,7 +214,7 @@ internal static class LiveTxt
         A("le_tmp_evento", "não consegui escutar o TextMeshPro; usando só varredura", "could not listen to TextMeshPro; using scans only", "no pude escuchar TextMeshPro; usando solo escaneo", "не удалось подписаться на TextMeshPro; только сканирование", "impossible d'écouter TextMeshPro ; balayage uniquement", "TextMeshPro nicht abhörbar; nur Scans");
         A("le_parte", "erro em: {0}", "error in: {0}", "error en: {0}", "ошибка в: {0}", "erreur dans : {0}", "Fehler in: {0}");
         A("menu_idioma", "IDIOMA DO MENU", "MENU LANGUAGE", "IDIOMA DEL MENÚ", "ЯЗЫК МЕНЮ", "LANGUE DU MENU", "MENÜSPRACHE");
-        A("fechar", "Fechar (F8)", "Close (F8)", "Cerrar (F8)", "Закрыть (F8)", "Fermer (F8)", "Schließen (F8)");
+        A("fechar", "Fechar ({0})", "Close ({0})", "Cerrar ({0})", "Закрыть ({0})", "Fermer ({0})", "Schließen ({0})");
         A("canto", "Tradução", "Translation", "Traducción", "Перевод", "Traduction", "Übersetzung");
         A("ligada", " Tradução ligada", " Translation on", " Traducción activada", " Перевод включён", " Traduction activée", " Übersetzung an");
         A("modo", "Modo", "Mode", "Modo", "Режим", "Mode", "Modus");
@@ -291,7 +346,7 @@ internal static class LiveTxt
         A("lote", "Textos por pedido", "Texts per request", "Textos por solicitud", "Текстов за запрос", "Textes par requête", "Texte pro Anfrage");
         A("rpm_aviso", "Planos grátis de IA têm limite: se aparecer erro 429, diminua os pedidos por minuto.", "Free AI plans have limits: if you see error 429, lower the requests per minute.", "Los planes gratis de IA tienen límite: si aparece el error 429, baja las solicitudes por minuto.", "У бесплатных тарифов ИИ есть лимиты: при ошибке 429 уменьшите число запросов в минуту.", "Les offres gratuites d'IA ont une limite : en cas d'erreur 429, réduisez les requêtes par minute.", "Kostenlose KI-Tarife haben Limits: Bei Fehler 429 die Anfragen pro Minute verringern.");
         A("rpm_gratis", "Modo grátis: ritmo automático. Um pedido por vez; o próximo sai assim que o anterior volta. Se o Google bloquear um endereço, o mod passa para outro sozinho.", "Free mode: automatic pace. One request at a time; the next goes out as soon as the previous one returns. If Google blocks an endpoint, the mod switches to another on its own.", "Modo gratis: ritmo automático. Una solicitud a la vez; la siguiente sale en cuanto vuelve la anterior. Si Google bloquea una dirección, el mod cambia a otra solo.", "Бесплатный режим: темп автоматический. Один запрос за раз; следующий уходит, как только вернулся предыдущий. Если Google заблокирует адрес, мод сам переключится на другой.", "Mode gratuit : rythme automatique. Une requête à la fois ; la suivante part dès que la précédente revient. Si Google bloque une adresse, le mod passe tout seul à une autre.", "Gratis-Modus: automatisches Tempo. Eine Anfrage nach der anderen; die nächste geht raus, sobald die vorige zurück ist. Sperrt Google eine Adresse, wechselt der Mod selbst zu einer anderen.");
-        A("botao_canto", " Mostrar o botão 'Tradução' no canto da tela (senão só pela tecla F8)", " Show the 'Translation' button in the screen corner (otherwise F8 only)", " Mostrar el botón 'Traducción' en la esquina (si no, solo con F8)", " Показывать кнопку «Перевод» в углу экрана (иначе только F8)", " Afficher le bouton « Traduction » dans le coin de l'écran (sinon F8 seulement)", " Schaltfläche „Übersetzung“ in der Bildschirmecke anzeigen (sonst nur mit F8)");
+        A("botao_canto", " Mostrar o botão 'Tradução' no canto da tela (senão só pela tecla {0})", " Show the 'Translation' button in the screen corner (otherwise {0} only)", " Mostrar el botón 'Traducción' en la esquina (si no, solo con {0})", " Показывать кнопку «Перевод» в углу экрана (иначе только {0})", " Afficher le bouton « Traduction » dans le coin de l'écran (sinon {0} seulement)", " Schaltfläche „Übersetzung“ in der Bildschirmecke anzeigen (sonst nur mit {0})");
         A("limpar_cache", "Limpar cache deste idioma", "Clear cache for this language", "Borrar caché de este idioma", "Очистить кэш этого языка", "Vider le cache de cette langue", "Cache dieser Sprache leeren");
         A("limpar_conf", "Clique de novo para APAGAR o cache", "Click again to DELETE the cache", "Haz clic de nuevo para BORRAR la caché", "Нажмите ещё раз, чтобы УДАЛИТЬ кэш", "Cliquez à nouveau pour SUPPRIMER le cache", "Erneut klicken, um den Cache zu LÖSCHEN");
         A("limpar_aviso", "Isso apaga {0} traduções deste idioma e não tem volta. No modo com chave, traduzir de novo custa de novo. Os termos travados do glossário ficam.", "This deletes {0} translations for this language and cannot be undone. In key mode, translating again costs again. Locked glossary terms are kept.", "Esto borra {0} traducciones de este idioma y no se puede deshacer. En el modo con clave, traducir de nuevo vuelve a costar. Los términos bloqueados del glosario se mantienen.", "Будет удалено {0} переводов этого языка без возможности отмены. В режиме с ключом повторный перевод снова стоит денег. Закреплённые термины глоссария сохранятся.", "Cela supprime {0} traductions de cette langue, sans retour possible. En mode clé, retraduire coûte à nouveau. Les termes verrouillés du glossaire sont conservés.", "Das löscht {0} Übersetzungen dieser Sprache und kann nicht rückgängig gemacht werden. Im Schlüssel-Modus kostet erneutes Übersetzen wieder. Gesperrte Glossarbegriffe bleiben erhalten.");

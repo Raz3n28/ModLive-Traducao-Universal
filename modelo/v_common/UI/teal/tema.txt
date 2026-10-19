@@ -1,0 +1,19 @@
+# gerado por ferramentas/gerar_ui.py
+nome=Teal
+fundo=#101418
+lateral=#0b0e11
+card=#161b21
+borda=#262e37
+borda_hover=#3a4652
+texto=#e6edf3
+mudo=#8b98a5
+destaque=#2dd4bf
+destaque_texto=#04201c
+nav_ativo=#12302d
+sec=#f59e0b
+sec_texto=#231500
+ok=#86efac
+aviso=#fcd34d
+erro=#fca5a5
+campo=#0b0e11
+claro=0

@@ -199,6 +199,34 @@ internal static class LiveMotor
         return r;
     }
 
+    // ultimas traducoes novas (para a aba Painel do menu), a mais nova no fim
+    private static readonly List<string[]> ultimas = new List<string[]>();
+    public static List<string[]> Ultimas { get { return ultimas; } }
+
+    private static void LembrarUltima(string original, string traducao)
+    {
+        if (string.IsNullOrEmpty(traducao)) return;
+        for (int i = ultimas.Count - 1; i >= 0; i--)
+            if (ultimas[i][0] == original) ultimas.RemoveAt(i);
+        ultimas.Add(new string[] { original, traducao });
+        while (ultimas.Count > 20) ultimas.RemoveAt(0);
+    }
+
+    // pedidos enviados no ultimo minuto (horario de cada um)
+    private static readonly List<float> envios = new List<float>();
+
+    public static int PedidosMinuto
+    {
+        get
+        {
+            float limite = Time.unscaledTime - 60f;
+            int velhos = 0;
+            while (velhos < envios.Count && envios[velhos] < limite) velhos++;
+            if (velhos > 0) envios.RemoveRange(0, velhos);
+            return envios.Count;
+        }
+    }
+
     // so frases (nao termos curtos), e nao muito longas, para nao gastar token a toa
     private static void LembrarRecente(string original, string traducao)
     {
@@ -466,6 +494,8 @@ internal static class LiveMotor
         else proximoEnvio = agora + 60f / Mathf.Max(1, LiveConfig.Rpm);
         emVoo++;
         Pedidos++;
+        envios.Add(agora);
+        if (envios.Count > 2000) envios.RemoveAt(0);
         drv.StartCoroutine(Enviar(p, lote, geracao, ep));
     }
 
@@ -609,7 +639,9 @@ internal static class LiveMotor
                         pistas.Remove(lote[i]);
                         Glossario.Auto(lote[i], trad[i], pista, catsIA != null ? Categorias.PorNome(catsIA[i]) : -1);
                         LembrarRecente(lote[i], trad[i]);
+                        LembrarUltima(lote[i], trad[i]);
                         Traduzidos++;
+                        LiveConfig.ContarHoje();
                     }
                     naFila.Remove(lote[i]);
                     tentativas.Remove(lote[i]);

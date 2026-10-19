@@ -1,0 +1,19 @@
+# gerado por ferramentas/gerar_ui.py
+nome=EUA
+fundo=#0e1322
+lateral=#0a0e1a
+card=#151c30
+borda=#253050
+borda_hover=#34426b
+texto=#f1f3f9
+mudo=#9aa3bd
+destaque=#d0293d
+destaque_texto=#ffffff
+nav_ativo=#2e1722
+sec=#3c5aa6
+sec_texto=#ffffff
+ok=#86efac
+aviso=#fcd34d
+erro=#fca5a5
+campo=#0a0e1a
+claro=0

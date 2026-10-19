@@ -1,0 +1,19 @@
+# gerado por ferramentas/gerar_ui.py
+nome=Por do Sol
+fundo=#17110d
+lateral=#110c09
+card=#211812
+borda=#3a2a1e
+borda_hover=#523b2a
+texto=#f7ede4
+mudo=#b29c88
+destaque=#fb923c
+destaque_texto=#2a1205
+nav_ativo=#3a2416
+sec=#f43f5e
+sec_texto=#ffffff
+ok=#86efac
+aviso=#fcd34d
+erro=#fca5a5
+campo=#110c09
+claro=0

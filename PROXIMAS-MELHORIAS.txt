@@ -1,9 +1,9 @@
-PROXIMAS MELHORIAS (anotadas para fazer depois)
+PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
 ================================================
 
-[ ] Menu F8, painel lateral: trocar "By Raz3n" por "By PauloRaz3n" (src\Menu.cs, funcao Lateral).
+[x] Menu F8, painel lateral: trocar "By Raz3n" por "By PauloRaz3n" (src\Menu.cs, funcao Lateral).
 
-[ ] Aba "Painel" (primeira do menu), no visual escuro/teal da proposta B:
+[x] Aba "Painel" (primeira do menu), no visual escuro/teal da proposta B:
     - faixa de cima: etiqueta ATIVA/PAUSADA + numeros + botao Pausar/Comecar;
     - 6 cartoes (Modo e provedor, Idioma, Estilo, Glossario, Cache e limite, Fontes) com "Abrir >" para a aba;
     - quadro "Estado": Traduzidos, Em cache, Pedidos/min (de N), Glossario; limite de pedidos com - N +;
@@ -12,13 +12,18 @@ PROXIMAS MELHORIAS (anotadas para fazer depois)
     Falta criar: contador de pedidos do ultimo minuto, lista das ultimas ~20 traducoes,
     contagem de travados e decidir "Traduzidos hoje" (contador diario salvo) ou "nesta sessao".
 
-[ ] Teclas configuraveis (salvas no config.txt), na aba Avancado:
+[x] Teclas configuraveis (salvas no config.txt), na aba Avancado:
     - tecla que abre/fecha o menu (hoje fixa no F8);
     - tecla que pausa e continua a traducao (uma tecla so para as duas funcoes, sem tecla por padrao
       ou uma livre como F7);
     - botao "Trocar tecla": aperta e o mod grava a proxima tecla; Esc cancela; avisa se repetir a outra.
 
-[ ] Botao "Traducao" do canto da tela arrastavel (fica em cima do botao do editor de personagens):
+[x] Botao "Traducao" do canto da tela arrastavel (fica em cima do botao do editor de personagens):
     - segurar e arrastar move o botao; clique rapido (sem arrastar) continua abrindo o menu;
     - posicao salva no config.txt (como a janela do menu) e presa dentro da tela;
     - opcao "Voltar botao para o canto" na aba Avancado, caso ele se perca.
+
+[x] Aparencia: 6 temas (Teal, Brasil, EUA, Roxo Neon, Por do Sol, Claro), icones nas abas, sombra da janela,
+    barra de titulo com etiqueta de estado e "x", cartoes nas abas, interruptor no lugar da caixa de marcar,
+    animacoes (abrir, aba que desliza, interruptor, botao do canto pulsando com fila), barra da fila
+    e transparencia do menu (aba Avancado > Aparencia).

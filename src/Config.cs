@@ -92,6 +92,13 @@ internal static class LiveConfig
     public static int Lote = 8;         // textos por pedido (so IA)
     public static bool BotaoVisivel = true;
     public static Rect Janela;          // posicao/tamanho do menu F8 (largura 0 = padrao, centralizado)
+    public static Vector2 PosBotao = new Vector2(-1f, -1f);   // botao "Traducao" (x < 0 = canto de cima a direita)
+    public static string Tema = "teal";                       // pasta do tema em v_common\UI
+    public static int Opacidade = 100;                         // transparencia do menu (40 a 100 %)
+    public static KeyCode TeclaMenu = KeyCode.F8;              // abre/fecha o menu
+    public static KeyCode TeclaPausa = KeyCode.F7;             // pausa/continua a traducao (None = sem tecla)
+    public static string HojeData = "";                        // "traduzidos hoje": dia (yyyy-MM-dd) e quantos
+    public static int HojeTotal;
     public static bool Contexto = true;     // manda as ultimas frases como contexto para a IA (so modo com chave)
     // tamanho minimo da fonte quando o texto nao cabe, em % do original (EncaixeFonte)
     public static int FonteMin = 65;
@@ -194,6 +201,13 @@ internal static class LiveConfig
             else if (k == "fonte_trad") FonteTrad = v;
             else if (k == "raciocinio") Raciocinio = v == "1";
             else if (k == "janela") Janela = LerRect(v);
+            else if (k == "botao_pos") { Rect b = LerRect(v + ";0;0"); if (v.Length > 0) PosBotao = new Vector2(b.x, b.y); }
+            else if (k == "tema") { if (v.Length > 0) Tema = v; }
+            else if (k == "opacidade") { if (int.TryParse(v, out n)) Opacidade = Mathf.Clamp(n, 40, 100); }
+            else if (k == "tecla_menu") TeclaMenu = LerTecla(v, KeyCode.F8);
+            else if (k == "tecla_pausa") TeclaPausa = LerTecla(v, KeyCode.F7);
+            else if (k == "hoje_data") HojeData = v;
+            else if (k == "hoje_total") { if (int.TryParse(v, out n)) HojeTotal = Mathf.Max(0, n); }
             else if (k == "menu_idioma") { if (int.TryParse(v, out n)) LiveTxt.Atual = n; }
             else if (k == "estilo") { if (int.TryParse(v, out n)) Estilo = Mathf.Clamp(n, 0, Estilos.Length - 1); }
             else if (k == "prompt") PromptExtra = v.Replace("\\n", "\n");
@@ -223,6 +237,13 @@ internal static class LiveConfig
             sb.AppendLine("fonte_trad=" + FonteTrad);
             sb.AppendLine("raciocinio=" + (Raciocinio ? "1" : "0"));
             sb.AppendLine("menu_idioma=" + LiveTxt.Atual);
+            if (PosBotao.x >= 0f) sb.AppendLine("botao_pos=" + (int)PosBotao.x + ";" + (int)PosBotao.y);
+            sb.AppendLine("tema=" + Tema);
+            sb.AppendLine("opacidade=" + Opacidade);
+            sb.AppendLine("tecla_menu=" + TeclaMenu);
+            sb.AppendLine("tecla_pausa=" + TeclaPausa);
+            sb.AppendLine("hoje_data=" + HojeData);
+            sb.AppendLine("hoje_total=" + HojeTotal);
             if (Janela.width > 0f) sb.AppendLine("janela=" + (int)Janela.x + ";" + (int)Janela.y + ";" + (int)Janela.width + ";" + (int)Janela.height);
             sb.AppendLine("estilo=" + Estilo);
             sb.AppendLine("prompt=" + (PromptExtra ?? "").Replace("\r", "").Replace("\n", "\\n"));
@@ -235,6 +256,26 @@ internal static class LiveConfig
         {
             LiveLog.Erro("le_gravar", e, LiveLog.T("it_config"));
         }
+    }
+
+    private static KeyCode LerTecla(string v, KeyCode padrao)
+    {
+        try { return (KeyCode)Enum.Parse(typeof(KeyCode), v, true); }
+        catch { return padrao; }
+    }
+
+    // mais uma traducao nova hoje (zera quando o dia muda)
+    public static void ContarHoje()
+    {
+        string dia = DateTime.Now.ToString("yyyy-MM-dd");
+        if (HojeData != dia) { HojeData = dia; HojeTotal = 0; }
+        HojeTotal++;
+        sujo = true;
+    }
+
+    public static int TraduzidosHoje
+    {
+        get { return HojeData == DateTime.Now.ToString("yyyy-MM-dd") ? HojeTotal : 0; }
     }
 
     private static Rect LerRect(string v)

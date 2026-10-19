@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 
 // PNGs do visual do menu (modelo\v_common\UI, gerados por ferramentas\gerar_ui.py).
+// Procura primeiro na pasta do tema escolhido (UI\<tema>), depois em UI\comum (icones, sombra, pecas brancas).
 // Cada um e lido uma vez; o que faltar devolve null e o menu fica com a textura gerada no codigo.
 internal static class Png
 {
@@ -11,9 +12,10 @@ internal static class Png
     private static string pasta;
     private static bool procurou;
 
-    public static bool Existe { get { return Pasta != null; } }
+    public static bool Existe { get { return Base != null; } }
 
-    private static string Pasta
+    // pasta UI do mod (null se nao achou)
+    public static string Base
     {
         get
         {
@@ -30,7 +32,7 @@ internal static class Png
             catch { }
             for (int i = 0; i < c.Count; i++)
             {
-                try { if (File.Exists(Path.Combine(c[i], "janela.png"))) { pasta = c[i]; break; } }
+                try { if (File.Exists(Path.Combine(c[i], "temas.txt"))) { pasta = c[i]; break; } }
                 catch { }
             }
             LiveLog.Info("lg_ui", pasta ?? "-");
@@ -38,14 +40,23 @@ internal static class Png
         }
     }
 
+    // troca de tema: as texturas antigas saem da memoria
+    public static void Limpar()
+    {
+        foreach (Texture2D t in cache.Values)
+            if (t != null) UnityEngine.Object.Destroy(t);
+        cache.Clear();
+    }
+
     public static Texture2D Tex(string nome)
     {
         Texture2D t;
         if (cache.TryGetValue(nome, out t)) return t;
         t = null;
-        if (Pasta != null)
+        if (Base != null)
         {
-            string arq = Path.Combine(pasta, nome + ".png");
+            string arq = Path.Combine(Path.Combine(pasta, LiveConfig.Tema), nome + ".png");
+            if (!File.Exists(arq)) arq = Path.Combine(Path.Combine(pasta, "comum"), nome + ".png");
             try
             {
                 if (File.Exists(arq))
@@ -83,7 +94,7 @@ internal static class Png
         s.border = new RectOffset(borda, borda, borda, borda);
     }
 
-    // estilo so com fundo (janela, painel lateral); null se o PNG nao existir
+    // estilo so com fundo (janela, painel lateral, cartao); null se o PNG nao existir
     public static GUIStyle Estilo(string nome, int borda)
     {
         Texture2D t = Tex(nome);
