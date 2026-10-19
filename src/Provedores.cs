@@ -262,7 +262,8 @@ internal static class Provedores
         if (!url.EndsWith("/chat/completions")) url += "/chat/completions";
 
         string modelo = LiveConfig.Modelo(p.Id).Trim();
-        string json = "{\"model\":" + Json.Esc(modelo) + (AceitaTemperatura(modelo) ? ",\"temperature\":0.2" : "") + ",\"messages\":["
+        string json = "{\"model\":" + Json.Esc(modelo) + (AceitaTemperatura(modelo) ? ",\"temperature\":0.2" : "")
+            + RaciocinioMinimo(p, modelo) + ",\"messages\":["
             + "{\"role\":\"system\",\"content\":" + Json.Esc(PromptSistema(textos)) + "},"
             + "{\"role\":\"user\",\"content\":" + Json.Esc(Json.ListaTextos(textos)) + "}]}";
         UnityWebRequest r = Post(url, json);
@@ -281,6 +282,41 @@ internal static class Provedores
         if (m.StartsWith("gpt-5", StringComparison.Ordinal)) return false;
         if (m.Length >= 2 && m[0] == 'o' && char.IsDigit(m[1])) return false;
         return true;
+    }
+
+    // Raciocinio minimo: os modelos que "pensam" antes de responder (gpt-5, o1/o3, Gemini, gpt-oss) gastam
+    // segundos pensando, e para traduzir isso quase nao muda a qualidade. Se o servico recusar o campo (erro 400
+    // falando de "reasoning"), o motor chama DesligarRaciocinio e o campo deixa de ir para esse provedor.
+    private static readonly HashSet<string> semRaciocinio = new HashSet<string>();
+
+    public static void LimparRaciocinio()
+    {
+        semRaciocinio.Clear();
+    }
+
+    public static bool DesligarRaciocinio(Provedor p)
+    {
+        if (string.IsNullOrEmpty(RaciocinioMinimo(p, LiveConfig.Modelo(p.Id).Trim()))) return false;
+        semRaciocinio.Add(p.Id);
+        LiveLog.Aviso("lg_sem_raciocinio", p.Nome);
+        return true;
+    }
+
+    private static string RaciocinioMinimo(Provedor p, string modelo)
+    {
+        if (semRaciocinio.Contains(p.Id)) return "";
+        string m = (modelo ?? "").ToLowerInvariant();
+        int barra = m.LastIndexOf('/');
+        if (barra >= 0) m = m.Substring(barra + 1);
+        string nivel = null;
+        if (m.StartsWith("gpt-5.", StringComparison.Ordinal)) nivel = "none";           // gpt-5.1 em diante
+        else if (m.StartsWith("gpt-5", StringComparison.Ordinal)) nivel = "minimal";    // gpt-5, gpt-5-mini, gpt-5-nano
+        else if (m.Length >= 2 && m[0] == 'o' && char.IsDigit(m[1])) nivel = "low";    // o1, o3, o4-mini...
+        else if (m.StartsWith("gemini-2.5-flash", StringComparison.Ordinal)) nivel = "none";
+        else if (m.StartsWith("gemini-", StringComparison.Ordinal)) nivel = "low";     // Gemini 3 nao desliga, so diminui
+        else if (m.StartsWith("gpt-oss", StringComparison.Ordinal)) nivel = "low";
+        if (nivel == null) return "";
+        return ",\"reasoning_effort\":\"" + nivel + "\"";
     }
 
     // ---------------- Claude (Anthropic) ----------------

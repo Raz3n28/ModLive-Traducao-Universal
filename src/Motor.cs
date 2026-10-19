@@ -33,7 +33,9 @@ internal static class LiveMotor
     private static readonly List<string[]> recentes = new List<string[]>();
     private const int MaxRecentes = 3;
 
-    private const int MaxEmVoo = 3;
+    // IA: pedidos ao mesmo tempo acompanham os "pedidos por minuto" (60 por minuto = 6 de uma vez), entre 3 e 8.
+    // Quem esta num plano gratis de IA e toma 429 baixa os pedidos por minuto e isto baixa junto.
+    private static int MaxEmVoo { get { return Mathf.Clamp(LiveConfig.Rpm / 10, 3, 8); } }
     // Google gratis (endpoint nao oficial): um pedido por vez (como o XUnity). Sem intervalo fixo: o proximo
     // sai assim que o anterior volta, so com esta folga minima. Se der 429, o endereco fica de castigo e o
     // motor passa para o proximo endereco (ver Castigar).
@@ -179,6 +181,7 @@ internal static class LiveMotor
     // Chamado quando o jogador mexe na chave/URL/modelo: tira as pausas e deixa tentar de novo.
     public static void Destravar()
     {
+        Provedores.LimparRaciocinio();   // modelo novo: tenta o raciocinio minimo de novo
         pausaAte = 0f;
         backoff = 0;
         falhou.Clear();
@@ -654,6 +657,15 @@ internal static class LiveMotor
         else
             ErroChave("e_erro", codigo, string.IsNullOrEmpty(erro) ? "" : " - " + erro);
 
+        // o servico nao aceitou o "raciocinio minimo": desliga so isso para este provedor e tenta de novo
+        // sem gastar tentativa dos textos
+        if (codigo == 400 && !google && corpo != null && corpo.IndexOf("reasoning", StringComparison.OrdinalIgnoreCase) >= 0
+            && Provedores.DesligarRaciocinio(p))
+        {
+            pausaAte = 0f;
+            for (int i = lote.Count - 1; i >= 0; i--) Devolver(lote[i], false, false);
+            return;
+        }
         if (codigo == 400)
         {
             // pode ser culpa de um texto especifico: conta tentativa
@@ -726,21 +738,31 @@ internal static class LiveMotor
         }
         List<string> lote = new List<string>();
         lote.Add("你好，欢迎来到空间站！Welcome to the station!");
-        UnityWebRequest req = null;
-        string erro = null;
         int ep = GoogleEp;
-        try { req = Provedores.Montar(p, lote, ep); }
-        catch (Exception e) { erro = e.Message; }
-        if (req == null)
+        int codigo = 0;
+        string err = null;
+        string corpo = null;
+        // segunda volta so se o servico recusou o "raciocinio minimo" (ai vai sem ele)
+        for (int volta = 0; volta < 2; volta++)
         {
-            Teste = LiveTxt.F("t_erro", erro);
-            yield break;
+            UnityWebRequest req = null;
+            string erro = null;
+            try { req = Provedores.Montar(p, lote, ep); }
+            catch (Exception e) { erro = e.Message; }
+            if (req == null)
+            {
+                Teste = LiveTxt.F("t_erro", erro);
+                yield break;
+            }
+            yield return req.SendWebRequest();
+            codigo = (int)req.responseCode;
+            err = req.error;
+            corpo = req.downloadHandler != null ? req.downloadHandler.text : null;
+            req.Dispose();
+            if (codigo == 400 && p.Tipo != 0 && corpo != null && corpo.IndexOf("reasoning", StringComparison.OrdinalIgnoreCase) >= 0
+                && Provedores.DesligarRaciocinio(p)) continue;
+            break;
         }
-        yield return req.SendWebRequest();
-        int codigo = (int)req.responseCode;
-        string err = req.error;
-        string corpo = req.downloadHandler != null ? req.downloadHandler.text : null;
-        req.Dispose();
         if (codigo == 200)
         {
             List<string> r = Provedores.Interpretar(p, lote, corpo, ep);
