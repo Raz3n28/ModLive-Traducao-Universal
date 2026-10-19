@@ -17,6 +17,8 @@ O QUE FAZ
   - Menu do mod em 6 idiomas (Portugues, Ingles, Espanhol, Russo, Frances, Alemao), escolhido no proprio F8.
   - Janelas IMGUI de outros mods (ex.: editor de personagens) tambem sao traduzidas, via Harmony
     (0Harmony.dll 2.3.6, licenca MIT, vai junto em v_common\Assemblies).
+  - Visual do menu F8 em PNG (modelo\v_common\UI, gerado por ferramentas\gerar_ui.py): logo PR, janela arrastavel
+    pela barra de cima e redimensionavel pelo canto; posicao salva no config.txt.
   Nao altera arquivo do jogo. Desativou o mod = jogo original.
 
 PASSO A PASSO

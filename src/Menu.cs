@@ -22,6 +22,14 @@ internal static class LiveMenu
     private static bool camposIniciados;
     private static Texture2D texFundo;
     private static Texture2D texLateral;
+    // visual em PNG (modelo\v_common\UI, gerado por ferramentas\gerar_ui.py); sem o PNG fica a textura gerada
+    private static GUIStyle sJanela, sLateral, sContorno;
+    private static Texture2D texLogo, texNome, texAlca;
+    // arrastar (barra de cima) e redimensionar (canto de baixo) a janela
+    private static bool arrastando;
+    private static bool redimensionando;
+    private static Vector2 pegaMouse;
+    private static Rect pegaJanela;
     // visual da proposta B: botoes planos arredondados, teal #2dd4bf no selecionado
     private static GUIStyle sBtn, sSel, sAmbar, sPerigo, sNav, sNavSel, sCampo, sMarcar, sBarra, sBarraPolegar;
     private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
@@ -146,14 +154,27 @@ internal static class LiveMenu
             campoLote = LiveConfig.Lote.ToString();
         }
 
-        // janela proporcional a tela: 65% da largura e 85% da altura (minimo 820 x 580)
-        float w = Mathf.Min(Mathf.Max(820f, sw * 0.65f), sw - 20f);
-        float h = Mathf.Min(Mathf.Max(580f, sh * 0.85f), sh - 40f);
+        // primeira vez: 65% da largura e 85% da altura, centralizada (minimo 820 x 580); depois fica onde o jogador deixou
+        Rect r = LiveConfig.Janela;
+        if (r.width <= 0f)
+        {
+            float w0 = Mathf.Min(Mathf.Max(820f, sw * 0.65f), sw - 20f);
+            float h0 = Mathf.Min(Mathf.Max(580f, sh * 0.85f), sh - 40f);
+            r = new Rect((sw - w0) / 2f, 20f, w0, h0);
+        }
+        r.width = Mathf.Clamp(r.width, 820f, Mathf.Max(820f, sw - 10f));
+        r.height = Mathf.Clamp(r.height, 580f, Mathf.Max(580f, sh - 10f));
+        r.x = Mathf.Clamp(r.x, 60f - r.width, sw - 60f);
+        r.y = Mathf.Clamp(r.y, 0f, sh - 40f);
+        r = ArrastarJanela(r);
+        float w = r.width;
+        float h = r.height;
         porPagina = Mathf.Clamp((int)((h - 380f) / 38f), 8, 20);
-        Rect r = new Rect((sw - w) / 2f, 20f, w, h);
-        GUI.DrawTexture(r, texFundo);
+        if (sJanela != null) GUI.Box(r, GUIContent.none, sJanela);
+        else GUI.DrawTexture(r, texFundo);
         Rect lat = new Rect(r.x, r.y, 190f, h);
-        GUI.DrawTexture(lat, texLateral);
+        if (sLateral != null) GUI.Box(lat, GUIContent.none, sLateral);
+        else GUI.DrawTexture(lat, texLateral);
         Lateral(lat);
 
         larguraUtil = w - 214f - 34f;
@@ -162,7 +183,7 @@ internal static class LiveMenu
         GUILayout.BeginHorizontal();
         // ExpandWidth: o titulo ocupa o espaco todo e nao e mais cortado
         GUILayout.Label(TituloAba(), sTitulo, GUILayout.ExpandWidth(true));
-        if (GUILayout.Button(LiveTxt.T("fechar"), GUILayout.Width(110f))) Fechar();
+        if (GUILayout.Button(LiveTxt.T("fechar"), sContorno, GUILayout.Width(110f))) Fechar();
         GUILayout.EndHorizontal();
 
         rolagem = GUILayout.BeginScrollView(rolagem, GUILayout.Height(h - 130f));
@@ -181,6 +202,46 @@ internal static class LiveMenu
 
         Rodape();
         GUILayout.EndArea();
+
+        // alca de redimensionar no canto de baixo
+        if (texAlca != null) GUI.DrawTexture(new Rect(r.xMax - 18f, r.yMax - 18f, 14f, 14f), texAlca);
+    }
+
+    // Barra de cima (logo e titulo) arrasta; o canto de baixo (24 x 24) muda o tamanho. Salva no config.txt.
+    private static Rect ArrastarJanela(Rect r)
+    {
+        Event ev = Event.current;
+        if (ev == null) return r;
+        Rect barra = new Rect(r.x + 190f, r.y, r.width - 330f, 44f);
+        Rect barraLat = new Rect(r.x, r.y, 190f, 70f);
+        Rect canto = new Rect(r.xMax - 24f, r.yMax - 24f, 24f, 24f);
+        if (ev.type == EventType.MouseDown && ev.button == 0)
+        {
+            if (canto.Contains(ev.mousePosition)) redimensionando = true;
+            else if (barra.Contains(ev.mousePosition) || barraLat.Contains(ev.mousePosition)) arrastando = true;
+            if (arrastando || redimensionando)
+            {
+                pegaMouse = ev.mousePosition;
+                pegaJanela = r;
+                GUIUtility.keyboardControl = 0;
+                ev.Use();
+            }
+        }
+        else if (ev.type == EventType.MouseDrag && (arrastando || redimensionando))
+        {
+            Vector2 d = ev.mousePosition - pegaMouse;
+            if (arrastando) { r.x = pegaJanela.x + d.x; r.y = pegaJanela.y + d.y; }
+            else { r.width = Mathf.Max(820f, pegaJanela.width + d.x); r.height = Mathf.Max(580f, pegaJanela.height + d.y); }
+            ev.Use();
+        }
+        else if (ev.rawType == EventType.MouseUp && (arrastando || redimensionando))
+        {
+            arrastando = false;
+            redimensionando = false;
+            LiveConfig.Marcar();
+        }
+        LiveConfig.Janela = r;
+        return r;
     }
 
     private static string TituloAba()
@@ -201,9 +262,21 @@ internal static class LiveMenu
     private static void Lateral(Rect lat)
     {
         GUILayout.BeginArea(new Rect(lat.x + 12f, lat.y + 14f, lat.width - 24f, lat.height - 28f));
-        GUILayout.Label("Universal", sMarca);
-        GUILayout.Label("Translator", sMarca);
-        GUILayout.Label("By Raz3n", sPeq);
+        if (texLogo != null && texNome != null)
+        {
+            // logo PR + nome em Space Grotesk (PNGs) e o autor embaixo do nome
+            Rect topo = GUILayoutUtility.GetRect(lat.width - 24f, 58f, sPeq, GUILayout.Height(58f));
+            GUI.DrawTexture(new Rect(topo.x + 2f, topo.y + 4f, 40f, 40f), texLogo);
+            float nw = texNome.width / 2f, nh = texNome.height / 2f;
+            GUI.DrawTexture(new Rect(topo.x + 50f, topo.y + 2f, nw, nh), texNome);
+            GUI.Label(new Rect(topo.x + 50f, topo.y + 4f + nh, 120f, 18f), "By Raz3n", sPeq);
+        }
+        else
+        {
+            GUILayout.Label("Universal", sMarca);
+            GUILayout.Label("Translator", sMarca);
+            GUILayout.Label("By Raz3n", sPeq);
+        }
         GUILayout.Space(10f);
         BotaoAtivar(lat.width - 24f, 34f);
         GUILayout.Space(10f);
@@ -1404,6 +1477,50 @@ internal static class LiveMenu
         sBarraPolegar.normal.background = Redondo(Hex(0x2a333d), Hex(0x2a333d));
         sBarraPolegar.border = new RectOffset(6, 6, 6, 6);
         sBarraPolegar.fixedWidth = 10f;
+
+        UsarPngs();
+    }
+
+    // Troca as texturas geradas pelos PNGs da pasta UI do mod (mesmo visual, cantos mais suaves, com hover e clique).
+    private static void UsarPngs()
+    {
+        if (!Png.Existe) { LiveLog.Aviso("lg_ui_sem"); sContorno = sBtn; return; }
+        Png.Fundos(sBtn, "sec", "sec_hover", "sec_press", 8);
+        Png.Fundos(sSel, "pri", "pri_hover", "pri_press", 10);
+        Png.Fundos(sAmbar, "amb", "amb_hover", "amb_press", 10);
+        Png.Fundos(sPerigo, "perigo", "perigo_hover", "perigo_press", 10);
+        Png.Fundos(sNav, null, "nav_hover", "nav_ativo", 10);
+        Png.Fundos(sNavSel, "nav_ativo", "nav_ativo", "nav_ativo", 10);
+        Png.Fundos(sCampo, "campo", "campo_hover", "campo_foco", 10);
+        sCampo.focused.background = sCampo.active.background;
+        sCampo.onFocused.background = sCampo.active.background;
+        sCampo.padding = new RectOffset(10, 10, 6, 6);
+        sContorno = new GUIStyle(sBtn);
+        Png.Fundos(sContorno, "btn", "btn_hover", "btn_press", 10);
+
+        Texture2D t;
+        if ((t = Png.Tex("check_off")) != null) { sCaixaDesl.normal.background = t; sCaixaDesl.focused.background = t; }
+        if ((t = Png.Tex("check_on")) != null)
+        {
+            sCaixaLig.normal.background = t; sCaixaLig.focused.background = t;
+            sCaixaLig.hover.background = t; sCaixaLig.active.background = t;
+        }
+        if ((t = Png.Tex("rolagem")) != null)
+        {
+            sBarra.normal.background = null;
+            sBarra.fixedWidth = 8f;
+            sBarraPolegar.normal.background = t;
+            sBarraPolegar.hover.background = Png.Tex("rolagem_hover") ?? t;
+            sBarraPolegar.active.background = sBarraPolegar.hover.background;
+            sBarraPolegar.border = new RectOffset(4, 4, 4, 4);
+            sBarraPolegar.fixedWidth = 8f;
+        }
+
+        sJanela = Png.Estilo("janela", 16);
+        sLateral = Png.Estilo("lateral", 16);
+        texLogo = Png.Tex("logo");
+        texNome = Png.Tex("marca");
+        texAlca = Png.Tex("alca");
     }
 
     // Durante o desenho da janela, os estilos padrao (usados pelos GUILayout.Button/TextField sem estilo)

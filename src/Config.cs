@@ -91,6 +91,7 @@ internal static class LiveConfig
     public static int Rpm = 60;         // pedidos por minuto
     public static int Lote = 8;         // textos por pedido (so IA)
     public static bool BotaoVisivel = true;
+    public static Rect Janela;          // posicao/tamanho do menu F8 (largura 0 = padrao, centralizado)
     public static bool Contexto = true;     // manda as ultimas frases como contexto para a IA (so modo com chave)
     // tamanho minimo da fonte quando o texto nao cabe, em % do original (EncaixeFonte)
     public static int FonteMin = 65;
@@ -192,6 +193,7 @@ internal static class LiveConfig
             else if (k == "fonte_min") { if (int.TryParse(v, out n)) FonteMin = Mathf.Clamp(n, 50, 90); }
             else if (k == "fonte_trad") FonteTrad = v;
             else if (k == "raciocinio") Raciocinio = v == "1";
+            else if (k == "janela") Janela = LerRect(v);
             else if (k == "menu_idioma") { if (int.TryParse(v, out n)) LiveTxt.Atual = n; }
             else if (k == "estilo") { if (int.TryParse(v, out n)) Estilo = Mathf.Clamp(n, 0, Estilos.Length - 1); }
             else if (k == "prompt") PromptExtra = v.Replace("\\n", "\n");
@@ -221,6 +223,7 @@ internal static class LiveConfig
             sb.AppendLine("fonte_trad=" + FonteTrad);
             sb.AppendLine("raciocinio=" + (Raciocinio ? "1" : "0"));
             sb.AppendLine("menu_idioma=" + LiveTxt.Atual);
+            if (Janela.width > 0f) sb.AppendLine("janela=" + (int)Janela.x + ";" + (int)Janela.y + ";" + (int)Janela.width + ";" + (int)Janela.height);
             sb.AppendLine("estilo=" + Estilo);
             sb.AppendLine("prompt=" + (PromptExtra ?? "").Replace("\r", "").Replace("\n", "\\n"));
             foreach (KeyValuePair<string, string> kv in Chaves) sb.AppendLine("chave." + kv.Key + "=" + kv.Value);
@@ -232,5 +235,14 @@ internal static class LiveConfig
         {
             LiveLog.Erro("le_gravar", e, LiveLog.T("it_config"));
         }
+    }
+
+    private static Rect LerRect(string v)
+    {
+        string[] p = v.Split(';');
+        int x, y, w, h;
+        if (p.Length == 4 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y) && int.TryParse(p[2], out w) && int.TryParse(p[3], out h))
+            return new Rect(x, y, w, h);
+        return new Rect();
     }
 }
