@@ -32,3 +32,5 @@ Subscribe, enable the mod in Mods, restart the game, then press F8 or click the 
 [b]Your API key stays only on your PC.[/b] The mod does not change any game file. Do not use with another translation mod.
 
 Author: PauloRaz3n
+
+[b]Enjoying the mod?[/b] You can support me on Ko-fi: [url=https://ko-fi.com/pauloraz3n]ko-fi.com/pauloraz3n[/url]
