@@ -660,7 +660,7 @@ internal static class LiveMotor
 
         // o servico nao aceitou o "raciocinio minimo": desliga so isso para este provedor e tenta de novo
         // sem gastar tentativa dos textos
-        if (codigo == 400 && !google && corpo != null && corpo.IndexOf("reasoning", StringComparison.OrdinalIgnoreCase) >= 0
+        if (!google && Provedores.ErroRaciocinio(codigo, corpo)
             && Provedores.DesligarRaciocinio(p))
         {
             pausaAte = 0f;
@@ -760,7 +760,7 @@ internal static class LiveMotor
             err = req.error;
             corpo = req.downloadHandler != null ? req.downloadHandler.text : null;
             req.Dispose();
-            if (codigo == 400 && p.Tipo != 0 && corpo != null && corpo.IndexOf("reasoning", StringComparison.OrdinalIgnoreCase) >= 0
+            if (p.Tipo != 0 && Provedores.ErroRaciocinio(codigo, corpo)
                 && Provedores.DesligarRaciocinio(p)) continue;
             break;
         }

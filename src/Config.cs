@@ -94,6 +94,10 @@ internal static class LiveConfig
     public static bool Contexto = true;     // manda as ultimas frases como contexto para a IA (so modo com chave)
     // tamanho minimo da fonte quando o texto nao cabe, em % do original (EncaixeFonte)
     public static int FonteMin = 65;
+    // fonte dos textos traduzidos: caminho do .ttf/.otf, "" = a do jogo (FonteEscolhida)
+    public static string FonteTrad = "";
+    // false = pede para a IA pensar o minimo (mais rapido); true = deixa o modelo pensar (pode traduzir melhor)
+    public static bool Raciocinio = false;
 
     public static readonly Dictionary<string, string> Chaves = new Dictionary<string, string>();
     public static readonly Dictionary<string, string> Urls = new Dictionary<string, string>();
@@ -186,6 +190,8 @@ internal static class LiveConfig
             else if (k == "botao") BotaoVisivel = v != "0";
             else if (k == "contexto") Contexto = v != "0";
             else if (k == "fonte_min") { if (int.TryParse(v, out n)) FonteMin = Mathf.Clamp(n, 50, 90); }
+            else if (k == "fonte_trad") FonteTrad = v;
+            else if (k == "raciocinio") Raciocinio = v == "1";
             else if (k == "menu_idioma") { if (int.TryParse(v, out n)) LiveTxt.Atual = n; }
             else if (k == "estilo") { if (int.TryParse(v, out n)) Estilo = Mathf.Clamp(n, 0, Estilos.Length - 1); }
             else if (k == "prompt") PromptExtra = v.Replace("\\n", "\n");
@@ -212,6 +218,8 @@ internal static class LiveConfig
             sb.AppendLine("botao=" + (BotaoVisivel ? "1" : "0"));
             sb.AppendLine("contexto=" + (Contexto ? "1" : "0"));
             sb.AppendLine("fonte_min=" + FonteMin);
+            sb.AppendLine("fonte_trad=" + FonteTrad);
+            sb.AppendLine("raciocinio=" + (Raciocinio ? "1" : "0"));
             sb.AppendLine("menu_idioma=" + LiveTxt.Atual);
             sb.AppendLine("estilo=" + Estilo);
             sb.AppendLine("prompt=" + (PromptExtra ?? "").Replace("\r", "").Replace("\n", "\\n"));

@@ -25,6 +25,7 @@ internal class LiveDriver : MonoBehaviour
     private float proximoSalvar;
     private float proximaFonte;
     private bool cenaNova;
+    private int versaoFonte;
 
     // para quem precisa rodar uma corrotina fora do motor (ex.: ClassificadorIA, chamado pelo menu)
     public static LiveDriver Instancia;
@@ -102,6 +103,8 @@ internal class LiveDriver : MonoBehaviour
         // traducoes provisorias que acabaram de ser retraduzidas: troca na tela pela nova
         if (LiveMotor.AtualizarPendente) AtualizarProvisorios();
 
+        if (versaoFonte != FonteEscolhida.Versao) ReaplicarFonte();
+
         if (!LiveConfig.Ativo) { fila.Clear(); naFila.Clear(); return; }
 
         Vigiar();
@@ -159,6 +162,17 @@ internal class LiveDriver : MonoBehaviour
         vigiadosUi.Add(t);
     }
 
+    // A escolha de fonte mudou no menu: devolve a original de todo texto trocado e aplica a nova nos traduzidos.
+    private void ReaplicarFonte()
+    {
+        versaoFonte = FonteEscolhida.Versao;
+        FonteEscolhida.DevolverTodas();
+        EncaixeFonte.Reverificar();
+        if (!FonteEscolhida.Ligada) return;
+        for (int i = 0; i < vigiados.Count; i++) if (vigiados[i]) FonteEscolhida.Trocar(vigiados[i]);
+        for (int i = 0; i < vigiadosUi.Count; i++) if (vigiadosUi[i]) FonteEscolhida.Trocar(vigiadosUi[i]);
+    }
+
     // Botao "Pre-traduzir" (aba Avancado): poe na fila o texto de tudo que ja esta carregado na memoria,
     // inclusive janelas e menus escondidos. Nao troca nada na tela: quando o texto aparecer, ja vem do cache.
     public static int PreTraduzir()
@@ -200,6 +214,7 @@ internal class LiveDriver : MonoBehaviour
             if (r != null && r != s)
             {
                 t.text = r;
+                FonteEscolhida.Trocar(t);
                 VigiarTmp(t);
                 return true;
             }
@@ -228,7 +243,7 @@ internal class LiveDriver : MonoBehaviour
                 string s = t.text;
                 if (LiveMotor.Nossa(s)) continue;
                 string r = LiveMotor.Traduzir(s, t);
-                if (r != null && r != s) t.text = r;
+                if (r != null && r != s) { t.text = r; FonteEscolhida.Trocar(t); }
             }
             catch { }
         }
@@ -247,7 +262,7 @@ internal class LiveDriver : MonoBehaviour
                 string s = t.text;
                 if (LiveMotor.Nossa(s)) continue;
                 string r = LiveMotor.Traduzir(s, t);
-                if (r != null && r != s) t.text = r;
+                if (r != null && r != s) { t.text = r; FonteEscolhida.Trocar(t); }
             }
             catch { }
         }
@@ -305,6 +320,8 @@ internal class LiveDriver : MonoBehaviour
         }
         catch (Exception e) { LiveLog.Erro("le_parte", e, "restore UI.Text"); }
 
+        FonteEscolhida.DevolverTodas();
+        EncaixeFonte.DevolverTodos();
         vigiados.Clear();
         idsVigiados.Clear();
         vigiadosUi.Clear();
@@ -403,6 +420,7 @@ internal class LiveDriver : MonoBehaviour
                 if (r != null && r != s)
                 {
                     t.text = r;
+                    FonteEscolhida.Trocar(t);
                     VigiarUi(t);
                 }
                 else EncaixeFonte.Verificar(t);

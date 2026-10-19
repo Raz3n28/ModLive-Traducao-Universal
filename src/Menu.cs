@@ -358,6 +358,7 @@ internal static class LiveMenu
             LiveConfig.Idioma = LiveConfig.Idiomas[novoIdioma][0];
             TradCache.TrocouIdioma();
             Glossario.TrocouIdioma();
+            FonteEscolhida.ConferirIdioma();   // fonte sem as letras do idioma novo volta para a do jogo
             termoEdit = null;
             Mudou();
         }
@@ -1078,6 +1079,16 @@ internal static class LiveMenu
             LiveConfig.Marcar();
         }
         GUILayout.Label(LiveTxt.T("contexto_dica"), sPeq);
+
+        // deixar a IA pensar (melhor, mais lento) ou pedir o minimo (mais rapido)
+        bool rac = Marca(LiveConfig.Raciocinio, LiveTxt.T("raciocinio"));
+        if (rac != LiveConfig.Raciocinio)
+        {
+            LiveConfig.Raciocinio = rac;
+            LiveConfig.Marcar();
+            Provedores.LimparRaciocinio();
+        }
+        GUILayout.Label(LiveTxt.T("raciocinio_dica"), sPeq);
         GUILayout.Space(8f);
 
         // tamanho minimo da fonte quando o texto nao cabe
@@ -1089,6 +1100,27 @@ internal static class LiveMenu
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Label(LiveTxt.T("fonte_min_dica"), sPeq);
+        GUILayout.Space(8f);
+
+        // fonte dos textos traduzidos (so as que tem as letras do idioma)
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_trad"), GUILayout.Width(250f));
+        if (GUILayout.Button("<", GUILayout.Width(28f))) FonteEscolhida.Passo(-1);
+        string nomeFonte = FonteEscolhida.NomeAtual;
+        GUILayout.Label(nomeFonte.Length == 0 ? LiveTxt.T("fonte_original") : nomeFonte, sCab, GUILayout.Width(210f));
+        if (GUILayout.Button(">", GUILayout.Width(28f))) FonteEscolhida.Passo(1);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.F("fonte_trad_dica", FonteEscolhida.Quantas - 1), sPeq);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(LiveTxt.T("fonte_pasta"), GUILayout.Height(24f), GUILayout.Width(160f)))
+        {
+            try { Application.OpenURL("file:///" + FonteEscolhida.PastaUsuario.Replace('\\', '/')); }
+            catch (Exception e) { LiveLog.Erro("le_parte", e, "open folder"); }
+        }
+        if (GUILayout.Button(LiveTxt.T("fonte_atualizar"), GUILayout.Height(24f), GUILayout.Width(160f))) FonteEscolhida.Recarregar();
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
         GUILayout.Space(10f);
 
         // pre-traduzir o que ja esta carregado (menus e janelas escondidos)

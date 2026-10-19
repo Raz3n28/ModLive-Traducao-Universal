@@ -15,7 +15,8 @@ Translates the game [b]in real time[/b], right inside the game.
 [*][b]Edit live[/b]: don't like a term's translation? Change it in real time, without closing the game.
 [*][b]Script filter[/b]: choose what to translate (Chinese, Japanese, Korean, Cyrillic, Latin, others).
 [*][b]Cache[/b]: each text is translated once and saved on your PC.
-[*][b]Auto font-size[/b] so the text fits.
+[*][b]Auto font-size[/b] so the text fits, also where a translated label would cover the one next to it.
+[*][b]Choose the translation font[/b]: 29 sci-fi style fonts included (Exo 2, Orbitron, Oxanium, Chakra Petch...), Windows fonts or your own .ttf. Only fonts with every letter of your language are listed.
 [/list]
 
 [h2]Free mode vs. your own API key[/h2]

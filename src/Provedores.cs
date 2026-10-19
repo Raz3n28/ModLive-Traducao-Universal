@@ -41,10 +41,16 @@ internal static class Provedores
         try
         {
             if (string.IsNullOrEmpty(corpo)) return null;
-            if (p.Tipo == 0) return InterpretarGoogle(corpo, textos, ep);
+            if (p.Tipo == 0)
+            {
+                List<string> g = InterpretarGoogle(corpo, textos, ep);
+                if (g != null) for (int i = 0; i < g.Count; i++) g[i] = Composto(g[i]);
+                return g;
+            }
             List<string> lista = ListaDeTextos(Conteudo(p, corpo), out cats);
             if (lista == null || lista.Count != esperado) { cats = null; return null; }
             if (cats != null && cats.Count != esperado) cats = null;   // categorias erradas nao estragam a traducao
+            for (int i = 0; i < lista.Count; i++) lista[i] = Composto(lista[i]);
             return lista;
         }
         catch (Exception e)
@@ -52,6 +58,15 @@ internal static class Provedores
             LiveLog.Erro("le_parte", e, "read response");
             return null;
         }
+    }
+
+    // Acento "solto" (a + til separado, Unicode decomposto) vira uma letra so (a com til). A fonte do jogo nao tem
+    // o til sozinho: ele vinha da fonte reserva, desenhado fora do lugar (riscos e pontos sobre as letras).
+    public static string Composto(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        try { return s.IsNormalized(NormalizationForm.FormC) ? s : s.Normalize(NormalizationForm.FormC); }
+        catch { return s; }
     }
 
     // texto da resposta da IA (formato OpenAI ou Claude)
@@ -350,6 +365,14 @@ internal static class Provedores
         semRaciocinio.Clear();
     }
 
+    // erro 400 que fala do campo de raciocinio ("reasoning_effort" ou "thinking")
+    public static bool ErroRaciocinio(int codigo, string corpo)
+    {
+        if (codigo != 400 || corpo == null) return false;
+        return corpo.IndexOf("reasoning", StringComparison.OrdinalIgnoreCase) >= 0
+            || corpo.IndexOf("thinking", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
     public static bool DesligarRaciocinio(Provedor p)
     {
         if (string.IsNullOrEmpty(RaciocinioMinimo(p, LiveConfig.Modelo(p.Id).Trim()))) return false;
@@ -360,8 +383,12 @@ internal static class Provedores
 
     private static string RaciocinioMinimo(Provedor p, string modelo)
     {
-        if (semRaciocinio.Contains(p.Id)) return "";
+        // opcao "IA pensa antes de traduzir" ligada: o modelo usa o raciocinio padrao dele
+        if (LiveConfig.Raciocinio || semRaciocinio.Contains(p.Id)) return "";
         string m = (modelo ?? "").ToLowerInvariant();
+        // DeepSeek V4 (deepseek-flash...) pensa por padrao; o site oficial desliga com "thinking"
+        if (p.Id == "deepseek" || LiveConfig.Url(p.Id).IndexOf("api.deepseek.com", StringComparison.OrdinalIgnoreCase) >= 0)
+            return ",\"thinking\":{\"type\":\"disabled\"}";
         int barra = m.LastIndexOf('/');
         if (barra >= 0) m = m.Substring(barra + 1);
         string nivel = null;
@@ -420,6 +447,9 @@ internal static class Provedores
         sb.Append("The source text may be Chinese, English or a mix of both. ");
         sb.Append("Hard rules: keep placeholders such as {0}, {1}, {2} and all markup tags EXACTLY unchanged and in the text; ");
         sb.Append("never add notes or explanations; if a string is already in the target language, return it unchanged. ");
+        sb.Append("The input has exactly ").Append(textos.Count).Append(textos.Count == 1 ? " string" : " strings")
+          .Append(". Each string is ONE item even when it contains line breaks (\\n): keep its line breaks inside that item, ")
+          .Append("and never merge two strings into one or split one into two. ");
         // lote com termo curto (vai entrar no glossario): a IA tambem diz a categoria de cada um, e ja traduz
         // seguindo a instrucao dessa categoria. Lote so com frases: formato simples (gasta menos).
         bool comCategoria = TemTermo(textos);

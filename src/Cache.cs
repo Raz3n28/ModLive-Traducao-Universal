@@ -45,7 +45,7 @@ internal static class TradCache
             string l = linhas[i];
             int tab = l.IndexOf('\t');
             if (tab <= 0) continue;
-            mapa[Desescapar(l.Substring(0, tab))] = Desescapar(l.Substring(tab + 1));
+            mapa[Desescapar(l.Substring(0, tab))] = Provedores.Composto(Desescapar(l.Substring(tab + 1)));
         }
         try
         {

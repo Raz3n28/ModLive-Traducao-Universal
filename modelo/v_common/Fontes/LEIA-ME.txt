@@ -1,0 +1,4 @@
+Fontes extras do Universal Translator (escolha em F8 > Avancado > Fonte da traducao).
+Todas sao do Google Fonts, licenca SIL Open Font License 1.1 (arquivos em "licencas").
+Para usar outra fonte, coloque o .ttf ou .otf na pasta "fontes" dentro da pasta de dados do mod
+(botao "Abrir pasta de fontes" no menu). So aparecem as fontes que tem as letras do idioma escolhido.
