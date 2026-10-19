@@ -114,6 +114,7 @@ internal static class FonteEscolhida
     public static void Recarregar()
     {
         todas = null;
+        previas.Clear();
         idiomaFiltro = null;
     }
 
@@ -155,6 +156,38 @@ internal static class FonteEscolhida
     {
         Filtrar();
         return i > 0 && i < filtradas.Count ? filtradas[i].Nome : "";
+    }
+
+    // Previa: imagem com o nome escrito na propria fonte (v_common/Fontes/previas/<nome>.png e <nome>_sel.png),
+    // gerada fora do jogo, porque o menu IMGUI nao desenha fonte carregada de arquivo. null = sem imagem (usa o nome).
+    private static readonly Dictionary<string, Texture2D> previas = new Dictionary<string, Texture2D>();
+
+    public static Texture2D Previa(int i, bool selecionada)
+    {
+        Filtrar();
+        if (i <= 0 || i >= filtradas.Count || string.IsNullOrEmpty(LiveBoot.PastaMod)) return null;
+        string arq = Path.Combine(Path.Combine(Path.Combine(Path.Combine(LiveBoot.PastaMod, "v_common"), "Fontes"), "previas"),
+            Path.GetFileNameWithoutExtension(filtradas[i].Caminho) + (selecionada ? "_sel.png" : ".png"));
+        Texture2D t;
+        if (previas.TryGetValue(arq, out t)) return t;
+        t = null;
+        try
+        {
+            // so fontes da pasta do mod tem previa (a do Windows com o mesmo nome nao)
+            if (File.Exists(arq) && filtradas[i].Caminho.IndexOf(LiveBoot.PastaMod, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                t = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (ImageConversion.LoadImage(t, File.ReadAllBytes(arq)))
+                {
+                    t.hideFlags = HideFlags.HideAndDontSave;
+                    t.filterMode = FilterMode.Bilinear;
+                }
+                else t = null;
+            }
+        }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "font preview"); t = null; }
+        previas[arq] = t;
+        return t;
     }
 
     public static void Escolher(int i)

@@ -26,6 +26,7 @@ internal static class LiveMenu
     private static GUIStyle sBtn, sSel, sAmbar, sPerigo, sNav, sNavSel, sCampo, sMarcar, sBarra, sBarraPolegar;
     private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
     private static GUIStyle skBotao, skCampo, skMarcar, skBarra, skPolegar;
+    private static Texture2D texMarcaDesl, texMarcaFoco, texMarcaLig;
     private static GUIStyle sTitulo;
     private static GUIStyle sMarca;
     private static GUIStyle sPeq;
@@ -281,7 +282,16 @@ internal static class LiveMenu
     // Caixa de marcar: fica em teal quando ligada
     private static bool Marca(bool valor, string texto)
     {
-        return GUILayout.Toggle(valor, texto, sMarcar);
+        bool r = GUILayout.Toggle(valor, texto, sMarcar);
+        // o quadradinho e desenhado a parte, so a esquerda do texto (o fundo do estilo se esticava pela linha toda)
+        Event ev = Event.current;
+        if (ev != null && ev.type == EventType.Repaint)
+        {
+            Rect q = GUILayoutUtility.GetLastRect();
+            Rect caixa = new Rect(q.x, q.y + Mathf.Floor((q.height - 18f) / 2f), 18f, 18f);
+            GUI.DrawTexture(caixa, valor ? texMarcaLig : (q.Contains(ev.mousePosition) ? texMarcaFoco : texMarcaDesl));
+        }
+        return r;
     }
 
     private static void Nav(int idx, string chave)
@@ -1190,7 +1200,9 @@ internal static class LiveMenu
             for (int j = i; j < i + cols && j < n; j++)
             {
                 string nome = j == 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(j);
-                if (GUILayout.Button(nome, j == sel ? sSel : sBtn, GUILayout.Width(bw), GUILayout.Height(34f)))
+                Texture2D img = FonteEscolhida.Previa(j, j == sel);
+                GUIContent conteudo = img != null ? new GUIContent(img, nome) : new GUIContent(nome);
+                if (GUILayout.Button(conteudo, j == sel ? sSel : sBtn, GUILayout.Width(bw), GUILayout.Height(38f)))
                     FonteEscolhida.Escolher(j);
             }
             GUILayout.EndHorizontal();
@@ -1334,16 +1346,21 @@ internal static class LiveMenu
         sCampo.padding = new RectOffset(8, 8, 5, 5);
         sCampo.fontSize = 13;
 
-        // caixa de marcar: quadrado de 18 px a esquerda (borda fixa, o resto da caixa nao desenha nada)
+        // caixa de marcar: so o texto (o quadradinho de 18 px e desenhado pelo Marca)
         sMarcar = new GUIStyle(GUI.skin.toggle);
-        Texture2D desl = Caixinha(false, Hex(0x0b0e11), Hex(0x3a4651));
-        Texture2D desl2 = Caixinha(false, Hex(0x0b0e11), Hex(0x8b98a5));
-        Texture2D lig = Caixinha(true, Hex(0x2dd4bf), Hex(0x2dd4bf));
-        sMarcar.normal.background = desl; sMarcar.hover.background = desl2; sMarcar.active.background = desl2; sMarcar.focused.background = desl;
-        sMarcar.onNormal.background = lig; sMarcar.onHover.background = lig; sMarcar.onActive.background = lig; sMarcar.onFocused.background = lig;
-        sMarcar.border = new RectOffset(18, 0, 18, 0);
-        sMarcar.overflow = new RectOffset(0, 0, -3, 0);
-        sMarcar.padding = new RectOffset(26, 0, 2, 2);
+        texMarcaDesl = Caixinha(false, Hex(0x0b0e11), Hex(0x3a4651));
+        texMarcaFoco = Caixinha(false, Hex(0x0b0e11), Hex(0x8b98a5));
+        texMarcaLig = Caixinha(true, Hex(0x2dd4bf), Hex(0x2dd4bf));
+        // sem fundo: o quadradinho e desenhado pelo Marca
+        sMarcar.normal.background = null; sMarcar.hover.background = null; sMarcar.active.background = null; sMarcar.focused.background = null;
+        sMarcar.onNormal.background = null; sMarcar.onHover.background = null; sMarcar.onActive.background = null; sMarcar.onFocused.background = null;
+        sMarcar.border = new RectOffset(0, 0, 0, 0);
+        sMarcar.overflow = new RectOffset(0, 0, 0, 0);
+        sMarcar.padding = new RectOffset(28, 0, 3, 3);
+        sMarcar.margin = new RectOffset(4, 4, 3, 3);
+        sMarcar.alignment = TextAnchor.MiddleLeft;
+        sMarcar.wordWrap = true;
+        sMarcar.stretchWidth = false;
         sMarcar.fontSize = 13;
         sMarcar.normal.textColor = sMarcar.hover.textColor = sMarcar.active.textColor = texto;
         sMarcar.onNormal.textColor = sMarcar.onHover.textColor = sMarcar.onActive.textColor = texto;
