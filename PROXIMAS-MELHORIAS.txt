@@ -2,3 +2,18 @@ PROXIMAS MELHORIAS (anotadas para fazer depois)
 ================================================
 
 [ ] Menu F8, painel lateral: trocar "By Raz3n" por "By PauloRaz3n" (src\Menu.cs, funcao Lateral).
+
+[ ] Aba "Painel" (primeira do menu), no visual escuro/teal da proposta B:
+    - faixa de cima: etiqueta ATIVA/PAUSADA + numeros + botao Pausar/Comecar;
+    - 6 cartoes (Modo e provedor, Idioma, Estilo, Glossario, Cache e limite, Fontes) com "Abrir >" para a aba;
+    - quadro "Estado": Traduzidos, Em cache, Pedidos/min (de N), Glossario; limite de pedidos com - N +;
+      Cache em disco e Limpar cache;
+    - "Ultimas traducoes": original -> traducao, etiqueta da categoria e Editar.
+    Falta criar: contador de pedidos do ultimo minuto, lista das ultimas ~20 traducoes,
+    contagem de travados e decidir "Traduzidos hoje" (contador diario salvo) ou "nesta sessao".
+
+[ ] Teclas configuraveis (salvas no config.txt), na aba Avancado:
+    - tecla que abre/fecha o menu (hoje fixa no F8);
+    - tecla que pausa e continua a traducao (uma tecla so para as duas funcoes, sem tecla por padrao
+      ou uma livre como F7);
+    - botao "Trocar tecla": aperta e o mod grava a proxima tecla; Esc cancela; avisa se repetir a outra.
