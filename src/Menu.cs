@@ -27,6 +27,7 @@ internal static class LiveMenu
     private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
     private static GUIStyle skBotao, skCampo, skMarcar, skBarra, skPolegar;
     private static Texture2D texMarcaDesl, texMarcaFoco, texMarcaLig;
+    private static GUIStyle sCaixaDesl, sCaixaLig;
     private static GUIStyle sTitulo;
     private static GUIStyle sMarca;
     private static GUIStyle sPeq;
@@ -279,19 +280,15 @@ internal static class LiveMenu
         return res;
     }
 
-    // Caixa de marcar: fica em teal quando ligada
+    // Caixa de marcar: quadradinho de 18 px (teal quando ligada) e o texto ao lado, os dois clicaveis
     private static bool Marca(bool valor, string texto)
     {
-        bool r = GUILayout.Toggle(valor, texto, sMarcar);
-        // o quadradinho e desenhado a parte, so a esquerda do texto (o fundo do estilo se esticava pela linha toda)
-        Event ev = Event.current;
-        if (ev != null && ev.type == EventType.Repaint)
-        {
-            Rect q = GUILayoutUtility.GetLastRect();
-            Rect caixa = new Rect(q.x, q.y + Mathf.Floor((q.height - 18f) / 2f), 18f, 18f);
-            GUI.DrawTexture(caixa, valor ? texMarcaLig : (q.Contains(ev.mousePosition) ? texMarcaFoco : texMarcaDesl));
-        }
-        return r;
+        GUILayout.BeginHorizontal();
+        bool clicou = GUILayout.Button("", valor ? sCaixaLig : sCaixaDesl, GUILayout.Width(18f), GUILayout.Height(18f));
+        if (GUILayout.Button(texto, sMarcar)) clicou = true;
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        return clicou ? !valor : valor;
     }
 
     private static void Nav(int idx, string chave)
@@ -1200,9 +1197,8 @@ internal static class LiveMenu
             for (int j = i; j < i + cols && j < n; j++)
             {
                 string nome = j == 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(j);
-                Texture2D img = FonteEscolhida.Previa(j, j == sel);
-                GUIContent conteudo = img != null ? new GUIContent(img, nome) : new GUIContent(nome);
-                if (GUILayout.Button(conteudo, j == sel ? sSel : sBtn, GUILayout.Width(bw), GUILayout.Height(38f)))
+                GUIStyle est = EstiloPrevia(j, j == sel);
+                if (GUILayout.Button(est != null ? "" : nome, est != null ? est : (j == sel ? sSel : sBtn), GUILayout.Width(bw), GUILayout.Height(38f)))
                     FonteEscolhida.Escolher(j);
             }
             GUILayout.EndHorizontal();
@@ -1220,6 +1216,34 @@ internal static class LiveMenu
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Label(LiveTxt.T("fonte_pasta_dica"), sPeq);
+    }
+
+    // Estilo cujo fundo e a imagem do botao com o nome na propria fonte. So a coluna lisa antes da
+    // borda direita estica (9-slice), entao o texto nao deforma. null = fonte sem imagem.
+    private static readonly Dictionary<string, GUIStyle> estilosPrevia = new Dictionary<string, GUIStyle>();
+    private static int versaoPrevias = -1;
+
+    private static GUIStyle EstiloPrevia(int j, bool selecionada)
+    {
+        if (versaoPrevias != FonteEscolhida.Versao) { estilosPrevia.Clear(); versaoPrevias = FonteEscolhida.Versao; }
+        string chave = FonteEscolhida.Nome(j) + (selecionada ? "|s" : "|n");
+        GUIStyle e;
+        if (estilosPrevia.TryGetValue(chave, out e)) return e;
+        e = null;
+        Texture2D normal = FonteEscolhida.Previa(j, selecionada ? "_sel" : "");
+        Texture2D foco = selecionada ? normal : FonteEscolhida.Previa(j, "_hover");
+        if (normal != null)
+        {
+            if (foco == null) foco = normal;
+            e = new GUIStyle(GUI.skin.label);
+            e.normal.background = normal;
+            e.hover.background = foco; e.active.background = foco; e.focused.background = normal;
+            e.border = new RectOffset(Mathf.Max(0, normal.width - 9), 8, 0, 0);
+            e.margin = new RectOffset(2, 2, 2, 2);
+            e.padding = new RectOffset(0, 0, 0, 0);
+        }
+        estilosPrevia[chave] = e;
+        return e;
     }
 
     // ---------------- aba 7: Log ----------------
@@ -1346,18 +1370,25 @@ internal static class LiveMenu
         sCampo.padding = new RectOffset(8, 8, 5, 5);
         sCampo.fontSize = 13;
 
-        // caixa de marcar: so o texto (o quadradinho de 18 px e desenhado pelo Marca)
-        sMarcar = new GUIStyle(GUI.skin.toggle);
+        // caixa de marcar: quadradinho de 18 px a parte (sCaixa*) e o texto num botao sem fundo (sMarcar)
         texMarcaDesl = Caixinha(false, Hex(0x0b0e11), Hex(0x3a4651));
         texMarcaFoco = Caixinha(false, Hex(0x0b0e11), Hex(0x8b98a5));
         texMarcaLig = Caixinha(true, Hex(0x2dd4bf), Hex(0x2dd4bf));
-        // sem fundo: o quadradinho e desenhado pelo Marca
-        sMarcar.normal.background = null; sMarcar.hover.background = null; sMarcar.active.background = null; sMarcar.focused.background = null;
-        sMarcar.onNormal.background = null; sMarcar.onHover.background = null; sMarcar.onActive.background = null; sMarcar.onFocused.background = null;
+        sCaixaDesl = new GUIStyle(GUI.skin.label);
+        sCaixaDesl.border = new RectOffset(0, 0, 0, 0);
+        sCaixaDesl.padding = new RectOffset(0, 0, 0, 0);
+        sCaixaDesl.overflow = new RectOffset(0, 0, 0, 0);
+        sCaixaDesl.normal.background = texMarcaDesl; sCaixaDesl.focused.background = texMarcaDesl;
+        sCaixaDesl.hover.background = texMarcaFoco; sCaixaDesl.active.background = texMarcaFoco;
+        sCaixaDesl.margin = new RectOffset(4, 6, 5, 3);
+        sCaixaLig = new GUIStyle(sCaixaDesl);
+        sCaixaLig.normal.background = texMarcaLig; sCaixaLig.focused.background = texMarcaLig;
+        sCaixaLig.hover.background = texMarcaLig; sCaixaLig.active.background = texMarcaLig;
+        sMarcar = new GUIStyle(GUI.skin.label);
         sMarcar.border = new RectOffset(0, 0, 0, 0);
         sMarcar.overflow = new RectOffset(0, 0, 0, 0);
-        sMarcar.padding = new RectOffset(28, 0, 3, 3);
-        sMarcar.margin = new RectOffset(4, 4, 3, 3);
+        sMarcar.padding = new RectOffset(0, 0, 3, 3);
+        sMarcar.margin = new RectOffset(0, 4, 3, 3);
         sMarcar.alignment = TextAnchor.MiddleLeft;
         sMarcar.wordWrap = true;
         sMarcar.stretchWidth = false;
@@ -1381,7 +1412,7 @@ internal static class LiveMenu
     {
         GUISkin k = GUI.skin;
         skBotao = k.button; skCampo = k.textField; skMarcar = k.toggle; skBarra = k.verticalScrollbar; skPolegar = k.verticalScrollbarThumb;
-        k.button = sBtn; k.textField = sCampo; k.toggle = sMarcar; k.verticalScrollbar = sBarra; k.verticalScrollbarThumb = sBarraPolegar;
+        k.button = sBtn; k.textField = sCampo; k.verticalScrollbar = sBarra; k.verticalScrollbarThumb = sBarraPolegar;
     }
 
     private static void VoltarSkin()
