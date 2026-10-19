@@ -1,0 +1,31 @@
+[h1]Universal Translator — Outer Space[/h1]
+
+Translates the game [b]in real time[/b], right inside the game.
+
+[h2]Mod functions[/h2]
+[list]
+[*][b]Live translation[/b] into 20 languages.
+[*][b]Free mode[/b]: Google Translate, no key needed. Works right away, but it is [b]slower[/b] than using an API key (see below).
+[*][b]AI mode[/b]: use your own API key (DeepSeek, Gemini, Groq, OpenRouter, OpenAI, Claude, Ollama and others).
+[*][b]F8 menu[/b] in 6 languages (PT, EN, ES, RU, FR, DE) with tabs: General, Provider/API, Style, Glossary, Categories, Advanced.
+[*][b]Translation style[/b] (faithful, natural, literal, very short) plus extra instructions for the AI.
+[*][b]Editable glossary[/b] with default and custom categories (keywords + AI instruction).
+[*][b]Edit live[/b]: don't like a term's translation? Change it in real time, without closing the game.
+[*][b]Script filter[/b]: choose what to translate (Chinese, Japanese, Korean, Cyrillic, Latin, others).
+[*][b]Cache[/b]: each text is translated once and saved on your PC.
+[*][b]Auto font-size[/b] so the text fits.
+[/list]
+
+[h2]Free mode vs. your own API key[/h2]
+[list]
+[*][b]Free (Google)[/b]: zero setup. To avoid being blocked by Google, the mod sends text in small batches with short pauses, so new text can take [b]a few seconds[/b] to appear, and heavy use may pause translation for a few minutes. Translations are more literal.
+[*][b]Your own API key[/b]: [b]much faster[/b] (several requests at once) and [b]better quality[/b]: the AI knows it is a sci-fi game and follows your style, glossary and category instructions. Some providers have free plans (e.g. Gemini, Groq).
+[/list]
+Already translated text is saved in the cache, so it shows up instantly next time in both modes.
+
+[h2]How to use[/h2]
+Subscribe, enable the mod in Mods, restart the game, then press F8 or click the Translation button.
+
+[b]Your API key stays only on your PC.[/b] The mod does not change any game file. Do not use with another translation mod.
+
+Author: PauloRaz3n

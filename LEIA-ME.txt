@@ -1,0 +1,33 @@
+TRADUCAO AO VIVO - OUTER SPACE (mod novo, separado do PT-BR e do EN)
+====================================================================
+
+O QUE FAZ
+  Traduz em tempo real qualquer texto que aparecer na tela, para o idioma escolhido no menu.
+  - Modo GRATIS: Google Tradutor, sem chave (endpoint nao oficial, qualidade media).
+  - Modo COM CHAVE: DeepSeek, Gemini, Groq, OpenRouter, OpenAI, Claude, Ollama ou personalizado.
+  - Estilos de traducao prontos + campo de instrucoes extras (so no modo IA).
+  - Cache em disco: cada texto e traduzido uma vez.
+  - Auto-resize da fonte e fontes reserva do Windows (acentos e outros alfabetos).
+  - GLOSSARIO: nomes, itens, armas, habilidades, estacoes, faccoes, botoes e titulos curtos ficam numa
+    lista com categoria (automatica, sem gastar token). O jogador troca a traducao, a categoria e trava o termo.
+  - Menu do mod em 6 idiomas (Portugues, Ingles, Espanhol, Russo, Frances, Alemao), escolhido no proprio F8.
+  Nao altera arquivo do jogo. Desativou o mod = jogo original.
+
+PASSO A PASSO
+  1. compilar.bat        -> monta o mod em saida\TraducaoLive
+  2. Testar no jogo.bat   -> copia para <jogo>\mods\TraducaoLive
+  3. No jogo: Mods -> ativar "Traducao ao Vivo" -> reiniciar.
+     DESATIVE os mods Traducao PT-BR / EN (nao use juntos).
+  4. Menu: botao "Traducao" no canto da tela (ou tecla F8).
+
+ARQUIVOS DO USUARIO (criados pelo mod)
+  config.txt, cache_<idioma>.txt e glossario_<idioma>.txt em  %USERPROFILE%\AppData\LocalLow\CatStudio\Outer Space\TraducaoLive
+  (a API key fica so ai, em texto simples)
+
+PASTAS
+  src\      codigo do mod (C# 5: sem $"", ?. e =>)
+  modelo\   manifest, icone, preview, descricao da Workshop
+
+NOTAS
+  - Ollama usa http://localhost (sem https). Se o Unity bloquear, o botao "Testar conexao" mostra o erro.
+  - Publicar na Workshop: ainda nao tem Publicar.bat neste mod (fica para depois do teste).

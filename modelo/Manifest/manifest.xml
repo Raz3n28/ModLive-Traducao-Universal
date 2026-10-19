@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nao deixe nenhum elemento vazio (ex.: <lib />): o jogo quebra o carregamento de TODOS os mods. -->
+<ModXmlManifest>
+  <packageId>pauloraz3n.outerspace.live</packageId>
+  <name>Universal Translator</name>
+  <author>PauloRaz3n</author>
+  <icon>icon.png</icon>
+  <previewImage>preview.png</previewImage>
+  <desc>Translates the game in real time into 20 languages. Free mode or your own AI key.</desc>
+  <versions>
+    <ModMetaVersion>
+      <version>v_common</version>
+      <main>TraducaoLive.dll</main>
+    </ModMetaVersion>
+  </versions>
+</ModXmlManifest>

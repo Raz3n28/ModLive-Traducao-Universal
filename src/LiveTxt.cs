@@ -1,0 +1,291 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+// Textos do menu do mod em 6 idiomas (PT, EN, ES, RU, FR, DE).
+// Independe do idioma para o qual o jogo e traduzido. A escolha fica salva no config.txt.
+internal static class LiveTxt
+{
+    public static readonly string[] Codigos = new string[] { "PT", "EN", "ES", "RU", "FR", "DE" };
+
+    private static readonly Dictionary<string, string[]> tab = new Dictionary<string, string[]>();
+    private static int atual = -1;
+
+    // 0 PT, 1 EN, 2 ES, 3 RU, 4 FR, 5 DE. Sem escolha salva: usa o idioma do Windows/jogo.
+    public static int Atual
+    {
+        get
+        {
+            if (atual < 0) atual = Detectar();
+            return atual;
+        }
+        set
+        {
+            atual = Mathf.Clamp(value, 0, Codigos.Length - 1);
+        }
+    }
+
+    private static int Detectar()
+    {
+        try
+        {
+            SystemLanguage s = Application.systemLanguage;
+            if (s == SystemLanguage.Portuguese) return 0;
+            if (s == SystemLanguage.Spanish) return 2;
+            if (s == SystemLanguage.Russian) return 3;
+            if (s == SystemLanguage.French) return 4;
+            if (s == SystemLanguage.German) return 5;
+        }
+        catch { }
+        return 1;
+    }
+
+    public static string T(string chave)
+    {
+        string[] v;
+        if (!tab.TryGetValue(chave, out v)) return chave;
+        string s = null;
+        int i = Atual;
+        if (i >= 0 && i < v.Length) s = v[i];
+        if (string.IsNullOrEmpty(s)) s = v[1];
+        return s;
+    }
+
+    // texto de um idioma especifico (0 PT, 1 EN, ...), sem depender do idioma do menu
+    public static string TIdioma(string chave, int idx)
+    {
+        string[] v;
+        if (!tab.TryGetValue(chave, out v)) return chave;
+        if (idx >= 0 && idx < v.Length && !string.IsNullOrEmpty(v[idx])) return v[idx];
+        return v[1];
+    }
+
+    public static bool Tem(string chave)
+    {
+        return tab.ContainsKey(chave);
+    }
+
+    public static string F(string chave, params object[] args)
+    {
+        try { return string.Format(T(chave), args); }
+        catch { return T(chave); }
+    }
+
+    private static void A(string k, string pt, string en, string es, string ru, string fr, string de)
+    {
+        tab[k] = new string[] { pt, en, es, ru, fr, de };
+    }
+
+    static LiveTxt()
+    {
+        // ---- barra lateral / geral ----
+        A("brand_sub", "Tradução ao vivo", "Live translation", "Traducción en vivo", "Перевод в реальном времени", "Traduction en direct", "Live-Übersetzung");
+        A("nav_geral", "Geral", "General", "General", "Общие", "Général", "Allgemein");
+        A("nav_prov", "Provedor / API", "Provider / API", "Proveedor / API", "Провайдер / API", "Fournisseur / API", "Anbieter / API");
+        A("nav_estilo", "Estilo", "Style", "Estilo", "Стиль", "Style", "Stil");
+        A("nav_glos", "Glossário", "Glossary", "Glosario", "Глоссарий", "Glossaire", "Glossar");
+        A("nav_cats", "Categorias", "Categories", "Categorías", "Категории", "Catégories", "Kategorien");
+        A("nav_avanc", "Avançado", "Advanced", "Avanzado", "Дополнительно", "Avancé", "Erweitert");
+        A("nav_log", "Log", "Log", "Registro", "Журнал", "Journal", "Protokoll");
+        A("comecar", "Começar tradução", "Start translating", "Empezar traducción", "Начать перевод", "Démarrer la traduction", "Übersetzung starten");
+        A("pausar", "Pausar tradução", "Pause translating", "Pausar traducción", "Приостановить перевод", "Mettre en pause", "Übersetzung pausieren");
+        A("trad_rodando", "Traduzindo: textos novos na tela são traduzidos.", "Translating: new text on screen gets translated.", "Traduciendo: el texto nuevo en pantalla se traduce.", "Перевод идёт: новый текст на экране переводится.", "Traduction en cours : le nouveau texte à l'écran est traduit.", "Übersetzung läuft: neuer Text auf dem Bildschirm wird übersetzt.");
+        A("trad_pausada", "Pausada: nada é enviado para tradução. Aperte \"Começar tradução\".", "Paused: nothing is sent for translation. Press \"Start translating\".", "En pausa: no se envía nada a traducir. Pulsa \"Empezar traducción\".", "Пауза: ничего не отправляется на перевод. Нажмите «Начать перевод».", "En pause : rien n'est envoyé à traduire. Appuyez sur « Démarrer la traduction ».", "Pausiert: nichts wird zum Übersetzen gesendet. Drücke „Übersetzung starten“.");
+        A("log_google", "Google grátis: endereços", "Free Google: endpoints", "Google gratis: direcciones", "Бесплатный Google: адреса", "Google gratuit : adresses", "Google kostenlos: Adressen");
+        A("log_ep_livre", "livre", "available", "libre", "доступен", "disponible", "frei");
+        A("log_ep_parado", "parado (volta em {0}:{1})", "paused (back in {0}:{1})", "en pausa (vuelve en {0}:{1})", "на паузе (вернётся через {0}:{1})", "en pause (retour dans {0}:{1})", "pausiert (zurück in {0}:{1})");
+        A("log_lotes", "Lotes ok: {0}   |   Lotes no fallback (um por vez): {1}", "Batches ok: {0}   |   Batches in fallback (one at a time): {1}", "Lotes ok: {0}   |   Lotes en respaldo (uno por vez): {1}", "Пакетов ок: {0}   |   Пакетов по одному: {1}", "Lots ok : {0}   |   Lots en secours (un par un) : {1}", "Pakete ok: {0}   |   Pakete einzeln wiederholt: {1}");
+        A("log_prov", "Traduções provisórias (do reserva) esperando retradução: {0}   |   Já melhoradas: {1}", "Provisional translations (from backup) waiting to be redone: {0}   |   Already improved: {1}", "Traducciones provisionales (del respaldo) esperando: {0}   |   Ya mejoradas: {1}", "Временные переводы (резервный адрес) ждут повтора: {0}   |   Уже улучшено: {1}", "Traductions provisoires (secours) en attente : {0}   |   Déjà améliorées : {1}", "Vorläufige Übersetzungen (Ersatz) wartend: {0}   |   Bereits verbessert: {1}");
+        A("log_limpar","Limpar log", "Clear log", "Borrar registro", "Очистить журнал", "Vider le journal", "Protokoll leeren");
+        A("log_pasta", "Abrir pasta", "Open folder", "Abrir carpeta", "Открыть папку", "Ouvrir le dossier", "Ordner öffnen");
+        A("log_vazio", "Nada no log ainda.", "Nothing in the log yet.", "Nada en el registro todavía.", "В журнале пока пусто.", "Rien dans le journal pour l'instant.", "Noch nichts im Protokoll.");
+
+        // ---- log (aba Log; o log.txt usa sempre o ingles) ----
+        A("lg_cache", "cache ({0}): {1} traduções, {2} provisórias", "cache ({0}): {1} translations, {2} provisional", "caché ({0}): {1} traducciones, {2} provisionales", "кэш ({0}): {1} переводов, {2} временных", "cache ({0}) : {1} traductions, {2} provisoires", "Cache ({0}): {1} Übersetzungen, {2} vorläufig");
+        A("lg_categorias", "categorias: {0}", "categories: {0}", "categorías: {0}", "категории: {0}", "catégories : {0}", "Kategorien: {0}");
+        A("lg_config", "configuração carregada: {0} -> {1}", "config loaded: {0} -> {1}", "configuración cargada: {0} -> {1}", "настройки загружены: {0} -> {1}", "configuration chargée : {0} -> {1}", "Konfiguration geladen: {0} -> {1}");
+        A("lg_fonte_ligada", "fontes reserva ligadas em {0}", "fallback fonts linked to {0}", "fuentes de respaldo vinculadas a {0}", "резервные шрифты подключены к {0}", "polices de secours liées à {0}", "Ersatzschriften verknüpft mit {0}");
+        A("lg_fonte_criada", "fonte reserva criada: {0}", "fallback font created: {0}", "fuente de respaldo creada: {0}", "резервный шрифт создан: {0}", "police de secours créée : {0}", "Ersatzschrift erstellt: {0}");
+        A("lg_fonte_nenhuma", "nenhuma fonte do Windows encontrada para reserva", "no Windows font found for fallback", "no se encontró ninguna fuente de Windows de respaldo", "не найдено шрифтов Windows для резерва", "aucune police Windows trouvée pour le secours", "keine Windows-Schrift als Ersatz gefunden");
+        A("lg_glossario", "glossário ({0}): {1} termos", "glossary ({0}): {1} terms", "glosario ({0}): {1} términos", "глоссарий ({0}): {1} терминов", "glossaire ({0}) : {1} termes", "Glossar ({0}): {1} Begriffe");
+        A("lg_iniciando", "Universal Translator iniciando", "Universal Translator starting", "Universal Translator iniciando", "Universal Translator запускается", "Universal Translator démarre", "Universal Translator startet");
+        A("lg_pronto", "pronto. Menu: botão 'Tradução' no canto da tela ou tecla F8", "ready. Menu: 'Translation' button in the screen corner or F8 key", "listo. Menú: botón 'Traducción' en la esquina de la pantalla o tecla F8", "готово. Меню: кнопка «Перевод» в углу экрана или клавиша F8", "prêt. Menu : bouton « Traduction » dans le coin de l'écran ou touche F8", "bereit. Menü: Schaltfläche „Übersetzung“ in der Bildschirmecke oder Taste F8");
+        A("lg_ativo", "tradutor ao vivo ativo", "live translator active", "traductor en vivo activo", "переводчик в реальном времени активен", "traducteur en direct actif", "Live-Übersetzer aktiv");
+        A("lg_restaurado", "texto original devolvido em {0} lugares; traduzindo de novo", "original text restored in {0} places; translating again", "texto original restaurado en {0} lugares; traduciendo de nuevo", "исходный текст возвращён в {0} местах; перевод заново", "texte original restauré à {0} endroits ; nouvelle traduction", "Originaltext an {0} Stellen wiederhergestellt; wird neu übersetzt");
+        A("lg_melhorada", "tradução melhorada trocada na tela em {0} lugares", "improved translation swapped on screen in {0} places", "traducción mejorada reemplazada en pantalla en {0} lugares", "улучшенный перевод заменён на экране в {0} местах", "traduction améliorée remplacée à l'écran à {0} endroits", "verbesserte Übersetzung an {0} Stellen ersetzt");
+        A("lg_comecou", "tradução começou", "translation started", "traducción iniciada", "перевод запущен", "traduction démarrée", "Übersetzung gestartet");
+        A("lg_pausada", "tradução pausada", "translation paused", "traducción en pausa", "перевод приостановлен", "traduction en pause", "Übersetzung pausiert");
+        A("lg_cache_limpo", "cache limpo ({0})", "cache cleared ({0})", "caché borrada ({0})", "кэш очищен ({0})", "cache vidé ({0})", "Cache geleert ({0})");
+        A("lg_usando", "google: usando agora o endereço {0}", "google: now using endpoint {0}", "google: usando ahora la dirección {0}", "google: теперь используется адрес {0}", "google : utilisation de l'adresse {0}", "google: verwende jetzt Adresse {0}");
+        A("lg_castigo", "google: endereço {0} deu {1}; fica {2} s parado (o próximo pedido usa o melhor endereço livre)", "google: endpoint {0} returned {1}; paused for {2} s (next request uses the best free endpoint)", "google: la dirección {0} dio {1}; queda {2} s en pausa (la próxima solicitud usa la mejor dirección libre)", "google: адрес {0} вернул {1}; пауза {2} с (следующий запрос пойдёт через лучший свободный адрес)", "google : l'adresse {0} a renvoyé {1} ; en pause {2} s (la prochaine requête utilise la meilleure adresse libre)", "google: Adresse {0} lieferte {1}; {2} s pausiert (nächste Anfrage nutzt die beste freie Adresse)");
+        A("lg_m_codigo", "código {0}", "code {0}", "código {0}", "код {0}", "code {0}", "Code {0}");
+        A("lg_m_rede", "erro de rede{0}", "network error{0}", "error de red{0}", "ошибка сети{0}", "erreur réseau{0}", "Netzwerkfehler{0}");
+        A("lg_m_formato", "resposta fora do formato 3 vezes", "wrong response format 3 times", "respuesta con formato incorrecto 3 veces", "неверный формат ответа 3 раза", "format de réponse incorrect 3 fois", "falsches Antwortformat (3-mal)");
+        A("lg_lotes", "lotes: {0} ok, {1} no fallback (este: {2} textos, {3}{4})", "batches: {0} ok, {1} in fallback (this one: {2} texts, {3}{4})", "lotes: {0} ok, {1} en respaldo (este: {2} textos, {3}{4})", "пакеты: {0} ок, {1} по одному (этот: {2} текстов, {3}{4})", "lots : {0} ok, {1} en secours (celui-ci : {2} textes, {3}{4})", "Pakete: {0} ok, {1} einzeln (dieses: {2} Texte, {3}{4})");
+        A("lg_ok", "ok", "ok", "ok", "ок", "ok", "ok");
+        A("lg_falhou", "falhou", "failed", "falló", "ошибка", "échec", "fehlgeschlagen");
+        A("lg_resposta", "resposta do lote que falhou: {0}", "response of the failed batch: {0}", "respuesta del lote fallido: {0}", "ответ неудачного пакета: {0}", "réponse du lot échoué : {0}", "Antwort des fehlgeschlagenen Pakets: {0}");
+        A("lg_retraduzidos", "retraduzidos {0} textos provisórios com {1} (faltam {2})", "redid {0} provisional texts with {1} ({2} left)", "retraducidos {0} textos provisionales con {1} (faltan {2})", "заново переведено {0} временных текстов через {1} (осталось {2})", "{0} textes provisoires retraduits avec {1} (reste {2})", "{0} vorläufige Texte neu übersetzt mit {1} ({2} übrig)");
+        A("lg_publicacao", "publicação: {0}", "publishing: {0}", "publicación: {0}", "публикация: {0}", "publication : {0}", "Veröffentlichung: {0}");
+        A("le_ler", "erro ao ler {0}", "error reading {0}", "error al leer {0}", "ошибка чтения: {0}", "erreur de lecture : {0}", "Fehler beim Lesen: {0}");
+        A("le_gravar", "erro ao gravar {0}", "error saving {0}", "error al guardar {0}", "ошибка сохранения: {0}", "erreur d'enregistrement : {0}", "Fehler beim Speichern: {0}");
+        A("le_carregar", "erro ao carregar {0}", "error loading {0}", "error al cargar {0}", "ошибка загрузки: {0}", "erreur de chargement : {0}", "Fehler beim Laden: {0}");
+        A("it_prov", "traduções provisórias", "provisional translations", "traducciones provisionales", "временные переводы", "traductions provisoires", "vorläufige Übersetzungen");
+        A("it_cache", "cache", "cache", "caché", "кэш", "cache", "Cache");
+        A("it_cat", "categorias", "categories", "categorías", "категории", "catégories", "Kategorien");
+        A("it_config", "configuração", "config", "configuración", "настройки", "configuration", "Konfiguration");
+        A("it_glos", "glossário", "glossary", "glosario", "глоссарий", "glossaire", "Glossar");
+        A("le_fonte_ajuste", "erro no ajuste de fonte ({0})", "font adjust error ({0})", "error al ajustar la fuente ({0})", "ошибка подгонки шрифта ({0})", "erreur d'ajustement de police ({0})", "Fehler bei Schriftanpassung ({0})");
+        A("le_fontes_reserva", "erro nas fontes reserva", "fallback fonts error", "error en las fuentes de respaldo", "ошибка резервных шрифтов", "erreur des polices de secours", "Fehler bei Ersatzschriften");
+        A("le_corrigir_fonte", "erro ao ligar fontes reserva em {0}", "error linking fallback fonts to {0}", "error al vincular fuentes de respaldo a {0}", "ошибка подключения резервных шрифтов к {0}", "erreur de liaison des polices de secours à {0}", "Fehler beim Verknüpfen der Ersatzschriften mit {0}");
+        A("le_fonte", "erro ao criar a fonte {0}", "error creating font {0}", "error al crear la fuente {0}", "ошибка создания шрифта {0}", "erreur de création de la police {0}", "Fehler beim Erstellen der Schrift {0}");
+        A("le_criar_fontes", "erro ao criar fontes reserva", "error creating fallback fonts", "error al crear fuentes de respaldo", "ошибка создания резервных шрифтов", "erreur de création des polices de secours", "Fehler beim Erstellen der Ersatzschriften");
+        A("le_iniciar", "falha ao iniciar o mod", "failed to start the mod", "error al iniciar el mod", "не удалось запустить мод", "échec du démarrage du mod", "Mod konnte nicht gestartet werden");
+        A("le_criar_tradutor", "falha ao criar o tradutor ao vivo", "failed to create the live translator", "error al crear el traductor en vivo", "не удалось создать переводчик", "échec de création du traducteur en direct", "Live-Übersetzer konnte nicht erstellt werden");
+        A("le_tmp_evento", "não consegui escutar o TextMeshPro; usando só varredura", "could not listen to TextMeshPro; using scans only", "no pude escuchar TextMeshPro; usando solo escaneo", "не удалось подписаться на TextMeshPro; только сканирование", "impossible d'écouter TextMeshPro ; balayage uniquement", "TextMeshPro nicht abhörbar; nur Scans");
+        A("le_parte", "erro em: {0}", "error in: {0}", "error en: {0}", "ошибка в: {0}", "erreur dans : {0}", "Fehler in: {0}");
+        A("menu_idioma", "IDIOMA DO MENU", "MENU LANGUAGE", "IDIOMA DEL MENÚ", "ЯЗЫК МЕНЮ", "LANGUE DU MENU", "MENÜSPRACHE");
+        A("fechar", "Fechar (F8)", "Close (F8)", "Cerrar (F8)", "Закрыть (F8)", "Fermer (F8)", "Schließen (F8)");
+        A("canto", "Tradução", "Translation", "Traducción", "Перевод", "Traduction", "Übersetzung");
+        A("ligada", " Tradução ligada", " Translation on", " Traducción activada", " Перевод включён", " Traduction activée", " Übersetzung an");
+        A("modo", "Modo", "Mode", "Modo", "Режим", "Mode", "Modus");
+        A("modo_gratis", "Grátis (Google Tradutor, sem chave)", "Free (Google Translate, no key)", "Gratis (Google Traductor, sin clave)", "Бесплатно (Google Переводчик, без ключа)", "Gratuit (Google Traduction, sans clé)", "Kostenlos (Google Übersetzer, ohne Schlüssel)");
+        A("modo_api", "Com chave de API (IA)", "With API key (AI)", "Con clave de API (IA)", "С ключом API (ИИ)", "Avec clé API (IA)", "Mit API-Schlüssel (KI)");
+        A("traduzir_para", "Traduzir para", "Translate to", "Traducir a", "Переводить на", "Traduire vers", "Übersetzen nach");
+        A("aviso_cjk", "Japonês, coreano e chinês dependem de fontes do Windows e podem ficar feios.", "Japanese, Korean and Chinese depend on Windows fonts and may look ugly.", "El japonés, coreano y chino dependen de las fuentes de Windows y pueden verse mal.", "Японский, корейский и китайский зависят от шрифтов Windows и могут выглядеть некрасиво.", "Le japonais, le coréen et le chinois dépendent des polices Windows et peuvent être peu esthétiques.", "Japanisch, Koreanisch und Chinesisch hängen von Windows-Schriften ab und können unschön aussehen.");
+        A("o_que", "O que traduzir", "What to translate", "Qué traducir", "Что переводить", "Quoi traduire", "Was übersetzen");
+        A("fonte_tudo", "Tudo (chinês e inglês)", "Everything (Chinese and English)", "Todo (chino e inglés)", "Всё (китайский и английский)", "Tout (chinois et anglais)", "Alles (Chinesisch und Englisch)");
+        A("fonte_cjk", "Só chinês/japonês/coreano", "Only Chinese/Japanese/Korean", "Solo chino/japonés/coreano", "Только китайский/японский/корейский", "Seulement chinois/japonais/coréen", "Nur Chinesisch/Japanisch/Koreanisch");
+        A("fonte_zh", "Chinês", "Chinese", "Chino", "Китайский", "Chinois", "Chinesisch");
+        A("fonte_ja", "Japonês", "Japanese", "Japonés", "Японский", "Japonais", "Japanisch");
+        A("fonte_ko", "Coreano", "Korean", "Coreano", "Корейский", "Coréen", "Koreanisch");
+        A("fonte_cir", "Cirílico (russo, ucraniano)", "Cyrillic (Russian, Ukrainian)", "Cirílico (ruso, ucraniano)", "Кириллица (русский, украинский)", "Cyrillique (russe, ukrainien)", "Kyrillisch (Russisch, Ukrainisch)");
+        A("fonte_lat", "Latino (inglês e outros)", "Latin (English and others)", "Latino (inglés y otros)", "Латиница (английский и др.)", "Latin (anglais et autres)", "Lateinisch (Englisch u. a.)");
+        A("fonte_out", "Outros alfabetos", "Other scripts", "Otros alfabetos", "Другие письменности", "Autres alphabets", "Andere Schriften");
+        A("fonte_dica", "Clique para ligar ou desligar cada tipo. Um texto misto é traduzido se tiver pelo menos um tipo ligado. Kanji sem kana conta como chinês.", "Click to turn each type on or off. Mixed text is translated if it has at least one enabled type. Kanji without kana counts as Chinese.", "Haz clic para activar o desactivar cada tipo. Un texto mixto se traduce si tiene al menos un tipo activado. Los kanji sin kana cuentan como chino.", "Нажмите, чтобы включить или выключить тип. Смешанный текст переводится, если в нём есть хотя бы один включённый тип. Кандзи без кана считается китайским.", "Cliquez pour activer ou désactiver chaque type. Un texte mixte est traduit s'il contient au moins un type activé. Les kanji sans kana comptent comme du chinois.", "Klicke, um jeden Typ ein- oder auszuschalten. Gemischter Text wird übersetzt, wenn er mindestens einen aktiven Typ enthält. Kanji ohne Kana zählen als Chinesisch.");
+        A("fonte_nenhum", "Nenhum tipo ligado: nada será traduzido.", "No type enabled: nothing will be translated.", "Ningún tipo activado: no se traducirá nada.", "Ни один тип не включён: ничего не будет переводиться.", "Aucun type activé : rien ne sera traduit.", "Kein Typ aktiviert: nichts wird übersetzt.");
+
+        // ---- provedor ----
+        A("servico", "Serviço de IA", "AI service", "Servicio de IA", "Сервис ИИ", "Service d'IA", "KI-Dienst");
+        A("url", "URL do serviço", "Service URL", "URL del servicio", "URL сервиса", "URL du service", "Dienst-URL");
+        A("chave_obrig", "API key (obrigatória)", "API key (required)", "Clave de API (obligatoria)", "Ключ API (обязателен)", "Clé API (obligatoire)", "API-Schlüssel (erforderlich)");
+        A("chave_opc", "API key (só se o serviço pedir)", "API key (only if the service asks)", "Clave de API (solo si el servicio la pide)", "Ключ API (только если требует сервис)", "Clé API (seulement si le service la demande)", "API-Schlüssel (nur wenn der Dienst ihn verlangt)");
+        A("chars", "caracteres", "characters", "caracteres", "символов", "caractères", "Zeichen");
+        A("mostrar", " mostrar / editar a chave", " show / edit the key", " mostrar / editar la clave", " показать / изменить ключ", " afficher / modifier la clé", " Schlüssel zeigen / bearbeiten");
+        A("apagar_chave", "Apagar chave", "Delete key", "Borrar clave", "Удалить ключ", "Effacer la clé", "Schlüssel löschen");
+        A("modelo", "Modelo", "Model", "Modelo", "Модель", "Modèle", "Modell");
+        A("testar", "Testar conexão", "Test connection", "Probar conexión", "Проверить соединение", "Tester la connexion", "Verbindung testen");
+        A("gratis_info", "No modo grátis não há serviço de IA. Troque para \"Com chave de API\" na aba Geral.", "Free mode has no AI service. Switch to \"With API key\" in the General tab.", "El modo gratis no usa servicio de IA. Cambia a «Con clave de API» en la pestaña General.", "В бесплатном режиме ИИ не используется. Выберите «С ключом API» на вкладке «Общие».", "Le mode gratuit n'utilise pas d'IA. Passez à « Avec clé API » dans l'onglet Général.", "Der kostenlose Modus nutzt keine KI. Wechsle im Tab Allgemein zu „Mit API-Schlüssel“.");
+        A("falta", "Falta configurar: ", "Setup missing: ", "Falta configurar: ", "Нужно настроить: ", "À configurer : ", "Noch einzurichten: ");
+        A("m_url", "falta a URL do serviço", "the service URL is missing", "falta la URL del servicio", "не указан URL сервиса", "l'URL du service manque", "Dienst-URL fehlt");
+        A("m_modelo", "falta o nome do modelo", "the model name is missing", "falta el nombre del modelo", "не указано название модели", "le nom du modèle manque", "Modellname fehlt");
+        A("m_chave", "falta a API key", "the API key is missing", "falta la clave de API", "не указан ключ API", "la clé API manque", "API-Schlüssel fehlt");
+
+        A("dica_google", "Grátis e sem chave. Qualidade média. Endpoint não oficial: pode ficar lento ou parar.", "Free, no key. Average quality. Unofficial endpoint: it may get slow or stop working.", "Gratis y sin clave. Calidad media. Endpoint no oficial: puede volverse lento o dejar de funcionar.", "Бесплатно и без ключа. Среднее качество. Неофициальный эндпоинт: может тормозить или перестать работать.", "Gratuit et sans clé. Qualité moyenne. Point d'accès non officiel : peut devenir lent ou cesser de fonctionner.", "Kostenlos, ohne Schlüssel. Mittlere Qualität. Inoffizieller Endpunkt: kann langsam werden oder ausfallen.");
+        A("dica_gemini", "Chave GRÁTIS em aistudio.google.com (tem limite por minuto e por dia).", "FREE key at aistudio.google.com (limited per minute and per day).", "Clave GRATIS en aistudio.google.com (con límite por minuto y por día).", "БЕСПЛАТНЫЙ ключ на aistudio.google.com (есть лимиты в минуту и в день).", "Clé GRATUITE sur aistudio.google.com (limite par minute et par jour).", "KOSTENLOSER Schlüssel auf aistudio.google.com (Limit pro Minute und pro Tag).");
+        A("dica_deepseek", "Barato e bom para tradução. Chave em platform.deepseek.com.", "Cheap and good for translation. Key at platform.deepseek.com.", "Barato y bueno para traducir. Clave en platform.deepseek.com.", "Дёшево и хорошо для перевода. Ключ на platform.deepseek.com.", "Bon marché et efficace pour traduire. Clé sur platform.deepseek.com.", "Günstig und gut zum Übersetzen. Schlüssel auf platform.deepseek.com.");
+        A("dica_groq", "Tem plano grátis (console.groq.com). Muito rápido.", "Has a free plan (console.groq.com). Very fast.", "Tiene plan gratis (console.groq.com). Muy rápido.", "Есть бесплатный тариф (console.groq.com). Очень быстро.", "Offre gratuite (console.groq.com). Très rapide.", "Hat einen kostenlosen Tarif (console.groq.com). Sehr schnell.");
+        A("dica_openrouter", "Um site, vários modelos. Existem modelos grátis (nome termina em :free). Troque o campo Modelo.", "One site, many models. Some models are free (name ends in :free). Change the Model field.", "Un sitio, varios modelos. Hay modelos gratis (el nombre termina en :free). Cambia el campo Modelo.", "Один сайт, много моделей. Есть бесплатные (название заканчивается на :free). Измените поле «Модель».", "Un site, plusieurs modèles. Certains sont gratuits (le nom finit par :free). Changez le champ Modèle.", "Eine Seite, viele Modelle. Einige sind kostenlos (Name endet auf :free). Ändere das Feld Modell.");
+        A("dica_openai", "Chave em platform.openai.com (pago).", "Key at platform.openai.com (paid).", "Clave en platform.openai.com (de pago).", "Ключ на platform.openai.com (платно).", "Clé sur platform.openai.com (payant).", "Schlüssel auf platform.openai.com (kostenpflichtig).");
+        A("dica_claude", "Chave em console.anthropic.com (pago).", "Key at console.anthropic.com (paid).", "Clave en console.anthropic.com (de pago).", "Ключ на console.anthropic.com (платно).", "Clé sur console.anthropic.com (payant).", "Schlüssel auf console.anthropic.com (kostenpflichtig).");
+        A("dica_ollama", "Modelo rodando no seu próprio PC: grátis e sem internet. Precisa do Ollama aberto.", "Model running on your own PC: free and offline. Ollama must be running.", "Modelo que corre en tu propio PC: gratis y sin internet. Necesita Ollama abierto.", "Модель работает на вашем ПК: бесплатно и без интернета. Нужен запущенный Ollama.", "Modèle exécuté sur votre propre PC : gratuit et hors ligne. Ollama doit être lancé.", "Modell läuft auf deinem eigenen PC: kostenlos und offline. Ollama muss laufen.");
+        A("dica_custom", "Qualquer serviço no formato OpenAI. Preencha URL, chave (se precisar) e modelo.", "Any service using the OpenAI format. Fill in URL, key (if needed) and model.", "Cualquier servicio con formato OpenAI. Rellena URL, clave (si hace falta) y modelo.", "Любой сервис в формате OpenAI. Укажите URL, ключ (если нужен) и модель.", "N'importe quel service au format OpenAI. Renseignez l'URL, la clé (si besoin) et le modèle.", "Jeder Dienst im OpenAI-Format. URL, Schlüssel (falls nötig) und Modell eintragen.");
+
+        // ---- estilo ----
+        A("estilo_titulo", "Estilo da tradução (prompt pronto)", "Translation style (ready-made prompt)", "Estilo de traducción (prompt listo)", "Стиль перевода (готовый промпт)", "Style de traduction (prompt prêt)", "Übersetzungsstil (fertiger Prompt)");
+        A("estilo0", "Padrão (fiel e curto)", "Standard (faithful and short)", "Estándar (fiel y corto)", "Стандартный (точно и коротко)", "Standard (fidèle et court)", "Standard (treu und kurz)");
+        A("estilo1", "Natural / conversado", "Natural / conversational", "Natural / conversacional", "Естественный / разговорный", "Naturel / conversationnel", "Natürlich / umgangssprachlich");
+        A("estilo2", "Literal", "Literal", "Literal", "Дословный", "Littéral", "Wörtlich");
+        A("estilo3", "Bem curto (botões)", "Very short (buttons)", "Muy corto (botones)", "Очень коротко (кнопки)", "Très court (boutons)", "Sehr kurz (Schaltflächen)");
+        A("resumo0", "Fiel ao original, mas curto e claro, porque o espaço da tela é pequeno.", "Faithful to the source, but short and clear because screen space is limited.", "Fiel al original, pero corto y claro porque el espacio en pantalla es limitado.", "Верно оригиналу, но коротко и понятно — места на экране мало.", "Fidèle à l'original, mais court et clair car la place à l'écran est limitée.", "Originaltreu, aber kurz und klar, da der Platz auf dem Bildschirm begrenzt ist.");
+        A("resumo1", "Soa natural, como uma localização profissional de jogo; prefere expressões do idioma a tradução palavra por palavra.", "Sounds natural, like professional game localization; prefers idiomatic phrasing over word-for-word.", "Suena natural, como una localización profesional; prefiere expresiones propias del idioma a la traducción literal.", "Звучит естественно, как профессиональная локализация; идиомы вместо перевода слово в слово.", "Sonne naturel, comme une localisation professionnelle ; privilégie les tournures idiomatiques au mot à mot.", "Klingt natürlich wie eine professionelle Spielelokalisierung; bevorzugt idiomatische Formulierungen statt Wort für Wort.");
+        A("resumo2", "Fica o mais perto possível das palavras originais, sem parafrasear.", "Stays as close as possible to the original wording, without paraphrasing.", "Se mantiene lo más cerca posible de las palabras originales, sin parafrasear.", "Максимально близко к словам оригинала, без перефразирования.", "Reste au plus près des mots d'origine, sans paraphraser.", "Bleibt so nah wie möglich am Originalwortlaut, ohne Umschreibung.");
+        A("resumo3", "Deixa tudo o mais curto possível (abrevia se precisar) para caber em botões e rótulos pequenos.", "Makes everything as short as possible (abbreviates if needed) to fit small buttons and labels.", "Lo deja todo lo más corto posible (abrevia si hace falta) para que quepa en botones y etiquetas pequeños.", "Делает всё максимально коротким (сокращает при необходимости), чтобы влезало в кнопки и подписи.", "Rend tout le plus court possible (abrège si besoin) pour tenir dans les petits boutons et libellés.", "Macht alles so kurz wie möglich (kürzt bei Bedarf), damit es auf kleine Schaltflächen und Beschriftungen passt.");
+        A("extras_titulo", "Instruções extras (opcional, em qualquer idioma)", "Extra instructions (optional, any language)", "Instrucciones extra (opcional, en cualquier idioma)", "Дополнительные инструкции (необязательно, на любом языке)", "Instructions supplémentaires (facultatif, dans n'importe quelle langue)", "Zusätzliche Anweisungen (optional, in jeder Sprache)");
+        A("exemplos", "Exemplos (clique para adicionar)", "Examples (click to add)", "Ejemplos (haz clic para añadir)", "Примеры (нажмите, чтобы добавить)", "Exemples (cliquez pour ajouter)", "Beispiele (zum Hinzufügen klicken)");
+        A("ex1", "Chame o jogador de Comandante.", "Call the player Commander.", "Llama al jugador Comandante.", "Называй игрока Командиром.", "Appelle le joueur Commandant.", "Nenne den Spieler Kommandant.");
+        A("ex2", "Mantenha nomes próprios sem traduzir.", "Keep proper names untranslated.", "Deja los nombres propios sin traducir.", "Не переводи имена собственные.", "Ne traduis pas les noms propres.", "Eigennamen nicht übersetzen.");
+        A("ex3", "Use um tom militar e direto.", "Use a direct, military tone.", "Usa un tono militar y directo.", "Используй прямой военный тон.", "Utilise un ton militaire et direct.", "Verwende einen direkten, militärischen Ton.");
+        A("ex4", "Não traduza siglas.", "Do not translate acronyms.", "No traduzcas las siglas.", "Не переводи аббревиатуры.", "Ne traduis pas les sigles.", "Akronyme nicht übersetzen.");
+        A("ex5", "Use linguagem informal de jogadores.", "Use informal gamer language.", "Usa lenguaje informal de jugadores.", "Используй неформальный язык геймеров.", "Utilise un langage informel de joueurs.", "Verwende informelle Spielersprache.");
+        A("limpar_extras", "Limpar", "Clear", "Borrar", "Очистить", "Effacer", "Leeren");
+        A("estilo_nota", "Estilo e instruções valem para os textos novos. Para refazer os já traduzidos, use \"Limpar cache\".", "Style and instructions apply to new texts. To redo already translated ones, use \"Clear cache\".", "El estilo y las instrucciones valen para los textos nuevos. Para rehacer los ya traducidos, usa «Borrar caché».", "Стиль и инструкции действуют для новых текстов. Чтобы переделать уже переведённые, нажмите «Очистить кэш».", "Le style et les instructions valent pour les nouveaux textes. Pour refaire ceux déjà traduits, utilisez « Vider le cache ».", "Stil und Anweisungen gelten für neue Texte. Um bereits übersetzte neu zu machen, nutze „Cache leeren“.");
+        A("estilo_gratis", "O Google Tradutor não aceita estilo nem instruções. Use \"Com chave de API\" para isso.", "Google Translate does not accept style or instructions. Use \"With API key\" for that.", "Google Traductor no admite estilo ni instrucciones. Usa «Con clave de API» para eso.", "Google Переводчик не поддерживает стиль и инструкции. Для этого выберите «С ключом API».", "Google Traduction n'accepte ni style ni instructions. Utilisez « Avec clé API » pour cela.", "Der Google Übersetzer unterstützt weder Stil noch Anweisungen. Nutze dafür „Mit API-Schlüssel“.");
+
+        // ---- glossario ----
+        A("glos_buscar", "Buscar", "Search", "Buscar", "Поиск", "Rechercher", "Suchen");
+        A("glos_novo", "+ Novo termo", "+ New term", "+ Nuevo término", "+ Новый термин", "+ Nouveau terme", "+ Neuer Begriff");
+        A("glos_termos", "termos", "terms", "términos", "терминов", "termes", "Begriffe");
+        A("col_orig", "ORIGINAL", "ORIGINAL", "ORIGINAL", "ОРИГИНАЛ", "ORIGINAL", "ORIGINAL");
+        A("col_trad", "TRADUÇÃO", "TRANSLATION", "TRADUCCIÓN", "ПЕРЕВОД", "TRADUCTION", "ÜBERSETZUNG");
+        A("col_cat", "CATEGORIA", "CATEGORY", "CATEGORÍA", "КАТЕГОРИЯ", "CATÉGORIE", "KATEGORIE");
+        A("col_trava", "TRAVA", "LOCK", "BLOQUEO", "ЗАМОК", "VERROU", "SPERRE");
+        A("trava_btn", "Travar", "Lock", "Bloquear", "Закрепить", "Verrouiller", "Sperren");
+        A("travado", "TRAVADO", "LOCKED", "BLOQUEADO", "ЗАКРЕПЛЕНО", "VERROUILLÉ", "GESPERRT");
+        A("soltar", "Soltar", "Unlock", "Desbloquear", "Открепить", "Déverrouiller", "Entsperren");
+        A("editar", "Editar", "Edit", "Editar", "Изменить", "Modifier", "Bearbeiten");
+        A("ok", "OK", "OK", "OK", "OK", "OK", "OK");
+        A("cancelar", "Cancelar", "Cancel", "Cancelar", "Отмена", "Annuler", "Abbrechen");
+        A("apagar_termo", "Apagar", "Delete", "Borrar", "Удалить", "Supprimer", "Löschen");
+        A("pag", "Página", "Page", "Página", "Страница", "Page", "Seite");
+        A("glos_vazio", "Nenhum termo ainda. Nomes, itens, habilidades e botões aparecem aqui conforme são traduzidos.", "No terms yet. Names, items, skills and buttons show up here as they get translated.", "Aún no hay términos. Los nombres, objetos, habilidades y botones aparecen aquí a medida que se traducen.", "Пока нет терминов. Названия, предметы, навыки и кнопки появляются здесь по мере перевода.", "Aucun terme pour l'instant. Les noms, objets, compétences et boutons apparaissent ici au fil des traductions.", "Noch keine Begriffe. Namen, Gegenstände, Fähigkeiten und Schaltflächen erscheinen hier, sobald sie übersetzt werden.");
+        A("glos_nota", "A categoria é sugerida automaticamente; clique nela para trocar. Termos editados ficam travados.", "The category is suggested automatically; click it to change. Edited terms get locked.", "La categoría se sugiere automáticamente; haz clic para cambiarla. Los términos editados quedan bloqueados.", "Категория определяется автоматически; нажмите на неё, чтобы изменить. Изменённые термины закрепляются.", "La catégorie est suggérée automatiquement ; cliquez dessus pour la changer. Les termes modifiés sont verrouillés.", "Die Kategorie wird automatisch vorgeschlagen; zum Ändern anklicken. Bearbeitete Begriffe werden gesperrt.");
+        A("novo_orig", "Original (como aparece no jogo)", "Original (as shown in the game)", "Original (como aparece en el juego)", "Оригинал (как в игре)", "Original (tel qu'il apparaît dans le jeu)", "Original (wie im Spiel angezeigt)");
+        A("lbl_trad", "Tradução", "Translation", "Traducción", "Перевод", "Traduction", "Übersetzung");
+        A("add", "Adicionar", "Add", "Añadir", "Добавить", "Ajouter", "Hinzufügen");
+        A("todos", "Todos", "All", "Todos", "Все", "Tous", "Alle");
+        A("cat0", "Outros", "Other", "Otros", "Другое", "Autre", "Sonstiges");
+        A("cat1", "Facção", "Faction", "Facción", "Фракция", "Faction", "Fraktion");
+        A("cat2", "Item", "Item", "Objeto", "Предмет", "Objet", "Gegenstand");
+        A("cat3", "Arma", "Weapon", "Arma", "Оружие", "Arme", "Waffe");
+        A("cat4", "Habilidade", "Skill", "Habilidad", "Навык", "Compétence", "Fähigkeit");
+        A("cat5", "Estação", "Station", "Estación", "Станция", "Station", "Station");
+        A("cat6", "Nome", "Name", "Nombre", "Имя", "Nom", "Name");
+        A("cat7", "Botão", "Button", "Botón", "Кнопка", "Bouton", "Schaltfläche");
+        A("cat8", "Título", "Title", "Título", "Заголовок", "Titre", "Titel");
+        A("cat_novo", "+ Categoria", "+ Category", "+ Categoría", "+ Категория", "+ Catégorie", "+ Kategorie");
+        A("cat_gerenciar", "Gerenciar categorias", "Manage categories", "Gestionar categorías", "Управление категориями", "Gérer les catégories", "Kategorien verwalten");
+        A("cat_nova_tit", "Nova categoria", "New category", "Nueva categoría", "Новая категория", "Nouvelle catégorie", "Neue Kategorie");
+        A("cat_editar_tit", "Editar categorias", "Edit categories", "Editar categorías", "Редактирование категорий", "Modifier les catégories", "Kategorien bearbeiten");
+        A("cat_nome", "Nome da categoria", "Category name", "Nombre de la categoría", "Название категории", "Nom de la catégorie", "Name der Kategorie");
+        A("cat_fixa", "Categoria padrão: o nome não muda, mas você pode editar o resto.", "Default category: the name stays, but you can edit the rest.", "Categoría estándar: el nombre no cambia, pero puedes editar el resto.", "Стандартная категория: название не меняется, остальное можно править.", "Catégorie par défaut : le nom ne change pas, mais vous pouvez modifier le reste.", "Standardkategorie: Der Name bleibt, den Rest kannst du ändern.");
+        A("cat_palavras", "Palavras-chave (automático, separadas por vírgula)", "Keywords (automatic, comma-separated)", "Palabras clave (automático, separadas por comas)", "Ключевые слова (автоматически, через запятую)", "Mots-clés (automatique, séparés par des virgules)", "Schlüsselwörter (automatisch, durch Kommas getrennt)");
+        A("cat_ex_pal", "Ex.: nave, cargueiro, falcon", "E.g.: ship, freighter, falcon", "Ej.: nave, carguero, falcon", "Напр.: корабль, грузовик, falcon", "Ex. : vaisseau, cargo, falcon", "Z. B.: Schiff, Frachter, Falke");
+        A("cat_instr", "Instrução para a IA (só no modo com chave)", "Instruction for the AI (API-key mode only)", "Instrucción para la IA (solo con clave de API)", "Инструкция для ИИ (только с ключом API)", "Instruction pour l'IA (mode clé API uniquement)", "Anweisung für die KI (nur mit API-Schlüssel)");
+        A("cat_ex", "Ex.: Nomes de naves. Mantenha em inglês, sem traduzir.", "E.g.: Ship names. Keep them in English, untranslated.", "Ej.: Nombres de naves. Mantenlos en inglés, sin traducir.", "Напр.: Названия кораблей. Оставляй на английском, не переводи.", "Ex. : Noms de vaisseaux. Garde-les en anglais, sans traduire.", "Z. B.: Schiffsnamen. Auf Englisch lassen, nicht übersetzen.");
+        A("cat_gratis", "No modo grátis só as palavras-chave valem. A instrução fica guardada para quando você usar uma chave de API.", "In free mode only the keywords apply. The instruction is kept for when you use an API key.", "En modo gratis solo valen las palabras clave. La instrucción se guarda para cuando uses una clave de API.", "В бесплатном режиме работают только ключевые слова. Инструкция сохранится до использования ключа API.", "En mode gratuit, seuls les mots-clés comptent. L'instruction est conservée pour quand vous utiliserez une clé API.", "Im kostenlosen Modus zählen nur die Schlüsselwörter. Die Anweisung bleibt für einen späteren API-Schlüssel gespeichert.");
+        A("cat_criar", "Criar", "Create", "Crear", "Создать", "Créer", "Erstellen");
+        A("cat_restaurar", "Restaurar padrão", "Restore default", "Restaurar valores", "Сбросить", "Restaurer par défaut", "Standard wiederherstellen");
+        A("cat_apagar", "Apagar categoria", "Delete category", "Borrar categoría", "Удалить категорию", "Supprimer la catégorie", "Kategorie löschen");
+        A("cat_apagar_conf", "Clique de novo para apagar", "Click again to delete", "Haz clic de nuevo para borrar", "Нажмите ещё раз для удаления", "Cliquez à nouveau pour supprimer", "Zum Löschen erneut klicken");
+        A("cat_reclass", "Reclassificar não travados", "Reclassify unlocked terms", "Reclasificar no bloqueados", "Переклассифицировать незакреплённые", "Reclasser les non verrouillés", "Nicht gesperrte neu einordnen");
+        A("cat_reclass_n", "{0} termos mudaram de categoria.", "{0} terms changed category.", "{0} términos cambiaron de categoría.", "Категория изменилась у терминов: {0}.", "{0} termes ont changé de catégorie.", "{0} Begriffe haben die Kategorie gewechselt.");
+        A("cat_limite", "Limite de {0} categorias novas atingido.", "Limit of {0} new categories reached.", "Límite de {0} categorías nuevas alcanzado.", "Достигнут предел: {0} новых категорий.", "Limite de {0} nouvelles catégories atteinte.", "Limit von {0} neuen Kategorien erreicht.");
+        A("cat_erro_nome", "Digite um nome que ainda não exista.", "Type a name that does not exist yet.", "Escribe un nombre que no exista.", "Введите имя, которого ещё нет.", "Saisissez un nom qui n'existe pas encore.", "Gib einen Namen ein, den es noch nicht gibt.");
+        A("cat_fechar", "Fechar painel", "Close panel", "Cerrar panel", "Закрыть панель", "Fermer le panneau", "Panel schließen");
+
+        // ---- avancado ----
+        A("rpm", "Pedidos por minuto", "Requests per minute", "Solicitudes por minuto", "Запросов в минуту", "Requêtes par minute", "Anfragen pro Minute");
+        A("lote", "Textos por pedido", "Texts per request", "Textos por solicitud", "Текстов за запрос", "Textes par requête", "Texte pro Anfrage");
+        A("rpm_aviso", "Planos grátis de IA têm limite: se aparecer erro 429, diminua os pedidos por minuto.", "Free AI plans have limits: if you see error 429, lower the requests per minute.", "Los planes gratis de IA tienen límite: si aparece el error 429, baja las solicitudes por minuto.", "У бесплатных тарифов ИИ есть лимиты: при ошибке 429 уменьшите число запросов в минуту.", "Les offres gratuites d'IA ont une limite : en cas d'erreur 429, réduisez les requêtes par minute.", "Kostenlose KI-Tarife haben Limits: Bei Fehler 429 die Anfragen pro Minute verringern.");
+        A("botao_canto", " Mostrar o botão 'Tradução' no canto da tela (senão só pela tecla F8)", " Show the 'Translation' button in the screen corner (otherwise F8 only)", " Mostrar el botón 'Traducción' en la esquina (si no, solo con F8)", " Показывать кнопку «Перевод» в углу экрана (иначе только F8)", " Afficher le bouton « Traduction » dans le coin de l'écran (sinon F8 seulement)", " Schaltfläche „Übersetzung“ in der Bildschirmecke anzeigen (sonst nur mit F8)");
+        A("limpar_cache", "Limpar cache deste idioma", "Clear cache for this language", "Borrar caché de este idioma", "Очистить кэш этого языка", "Vider le cache de cette langue", "Cache dieser Sprache leeren");
+        A("status", "Na fila: {0}   |   Traduzidos agora: {1}   |   No cache: {2}   |   Pedidos: {3}   |   Erros: {4}", "Queue: {0}   |   Translated now: {1}   |   In cache: {2}   |   Requests: {3}   |   Errors: {4}", "En cola: {0}   |   Traducidos ahora: {1}   |   En caché: {2}   |   Solicitudes: {3}   |   Errores: {4}", "В очереди: {0}   |   Переведено: {1}   |   В кэше: {2}   |   Запросов: {3}   |   Ошибок: {4}", "En file : {0}   |   Traduits : {1}   |   En cache : {2}   |   Requêtes : {3}   |   Erreurs : {4}", "Warteschlange: {0}   |   Übersetzt: {1}   |   Im Cache: {2}   |   Anfragen: {3}   |   Fehler: {4}");
+        A("ultimo_erro", "Último erro: ", "Last error: ", "Último error: ", "Последняя ошибка: ", "Dernière erreur : ", "Letzter Fehler: ");
+        A("aviso_teclas", "Abra este menu no menu inicial ou na pausa: as teclas digitadas aqui também chegam ao jogo. A API key fica salva só no seu PC (pasta TraducaoLive).", "Open this menu on the main menu or while paused: keys typed here also reach the game. The API key is stored only on your PC (TraducaoLive folder).", "Abre este menú en el menú inicial o en pausa: las teclas que escribas aquí también llegan al juego. La clave de API se guarda solo en tu PC (carpeta TraducaoLive).", "Открывайте это меню в главном меню или на паузе: нажатия клавиш здесь доходят и до игры. Ключ API хранится только на вашем ПК (папка TraducaoLive).", "Ouvrez ce menu dans le menu principal ou en pause : les touches saisies ici arrivent aussi dans le jeu. La clé API n'est enregistrée que sur votre PC (dossier TraducaoLive).", "Öffne dieses Menü im Hauptmenü oder in der Pause: Hier getippte Tasten erreichen auch das Spiel. Der API-Schlüssel wird nur auf deinem PC gespeichert (Ordner TraducaoLive).");
+
+        // ---- erros e teste (Motor) ----
+        A("e_chave", "chave recusada ({0}). Confira a API key.", "key rejected ({0}). Check the API key.", "clave rechazada ({0}). Revisa la clave de API.", "ключ отклонён ({0}). Проверьте ключ API.", "clé refusée ({0}). Vérifiez la clé API.", "Schlüssel abgelehnt ({0}). Prüfe den API-Schlüssel.");
+        A("e_404", "não encontrado (404). Confira a URL e o nome do modelo.", "not found (404). Check the URL and the model name.", "no encontrado (404). Revisa la URL y el nombre del modelo.", "не найдено (404). Проверьте URL и название модели.", "introuvable (404). Vérifiez l'URL et le nom du modèle.", "nicht gefunden (404). Prüfe URL und Modellname.");
+        A("e_429", "limite de uso atingido (429). Diminua os pedidos por minuto.", "usage limit reached (429). Lower the requests per minute.", "límite de uso alcanzado (429). Baja las solicitudes por minuto.", "лимит исчерпан (429). Уменьшите число запросов в минуту.", "limite d'utilisation atteinte (429). Réduisez les requêtes par minute.", "Nutzungslimit erreicht (429). Verringere die Anfragen pro Minute.");
+        A("e_erro", "erro {0}{1}", "error {0}{1}", "error {0}{1}", "ошибка {0}{1}", "erreur {0}{1}", "Fehler {0}{1}");
+        A("e_formato", "a IA respondeu fora do formato (tentando um texto por vez)", "the AI replied in the wrong format (trying one text at a time)", "la IA respondió fuera de formato (probando un texto a la vez)", "ИИ ответил не в том формате (пробую по одному тексту)", "l'IA a répondu hors format (essai un texte à la fois)", "Die KI antwortete im falschen Format (versuche einen Text nach dem anderen)");
+        A("t_testando", "testando...", "testing...", "probando...", "проверка...", "test en cours...", "teste...");
+        A("t_nao_deu", "não deu: {0}", "failed: {0}", "no funcionó: {0}", "не удалось: {0}", "échec : {0}", "fehlgeschlagen: {0}");
+        A("t_erro", "erro: {0}", "error: {0}", "error: {0}", "ошибка: {0}", "erreur : {0}", "Fehler: {0}");
+        A("t_formato", "respondeu, mas fora do formato esperado", "replied, but not in the expected format", "respondió, pero fuera del formato esperado", "ответил, но не в ожидаемом формате", "a répondu, mais hors du format attendu", "antwortete, aber nicht im erwarteten Format");
+        A("t_chave", "chave recusada ({0})", "key rejected ({0})", "clave rechazada ({0})", "ключ отклонён ({0})", "clé refusée ({0})", "Schlüssel abgelehnt ({0})");
+        A("t_404", "404: confira a URL e o modelo", "404: check the URL and the model", "404: revisa la URL y el modelo", "404: проверьте URL и модель", "404 : vérifiez l'URL et le modèle", "404: prüfe URL und Modell");
+        A("t_falhou", "falhou: {0} {1}", "failed: {0} {1}", "falló: {0} {1}", "сбой: {0} {1}", "échec : {0} {1}", "fehlgeschlagen: {0} {1}");
+    }
+}
