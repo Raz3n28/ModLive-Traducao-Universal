@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Menu dentro do jogo (IMGUI). Abre pelo botao no canto da tela ou pela tecla F8.
-// Visual "painel lateral": abas Geral, Provedor/API, Estilo, Glossario e Avancado.
+// Visual "painel lateral": abas Geral, Provedor/API, Estilo, Glossario, Categorias, Avancado, Log e Fontes.
 // Textos em 6 idiomas (LiveTxt). So usa funcoes de IMGUI que existem nas DLLs cortadas do jogo.
 internal static class LiveMenu
 {
@@ -22,6 +22,12 @@ internal static class LiveMenu
     private static bool camposIniciados;
     private static Texture2D texFundo;
     private static Texture2D texLateral;
+    // visual da proposta B: botoes planos arredondados, teal #2dd4bf no selecionado
+    private static GUIStyle sBtn, sSel, sAmbar, sPerigo, sNav, sNavSel, sCampo, sMarcar, sBarra, sBarraPolegar;
+    private static readonly Dictionary<Color, GUIStyle[]> chips = new Dictionary<Color, GUIStyle[]>();
+    private static GUIStyle skBotao, skCampo, skMarcar, skBarra, skPolegar;
+    private static Texture2D texMarcaDesl, texMarcaFoco, texMarcaLig;
+    private static GUIStyle sCaixaDesl, sCaixaLig;
     private static GUIStyle sTitulo;
     private static GUIStyle sMarca;
     private static GUIStyle sPeq;
@@ -57,6 +63,11 @@ internal static class LiveMenu
     private static string buscaFiltro;
     private static int catFiltro = -1;
 
+    // aba Avancado
+    private static bool confLimpar;         // true = o proximo clique em "Limpar cache" apaga de verdade
+    private static string msgAvanc = "";
+    private static bool msgAvancErro;
+
     public static void Desenhar(MonoBehaviour drv)
     {
         Event ev = Event.current;
@@ -82,7 +93,9 @@ internal static class LiveMenu
             else
             {
                 PrepararEstilos();
-                Janela(drv, sw, sh);
+                TrocarSkin();
+                try { Janela(drv, sw, sh); }
+                finally { VoltarSkin(); }
             }
         }
         finally
@@ -107,6 +120,7 @@ internal static class LiveMenu
     private static void Fechar()
     {
         aberto = false;
+        confLimpar = false;
         termoEdit = null;
         termoCat = null;
         LiveConfig.SalvarSeSujo();
@@ -160,6 +174,7 @@ internal static class LiveMenu
             case 4: PaginaCategorias(); break;
             case 5: PaginaAvancado(); break;
             case 6: PaginaLog(); break;
+            case 7: PaginaFontes(); break;
             default: PaginaGeral(); break;
         }
         GUILayout.EndScrollView();
@@ -178,6 +193,7 @@ internal static class LiveMenu
             case 4: return LiveTxt.T("nav_cats");
             case 5: return LiveTxt.T("nav_avanc");
             case 6: return LiveTxt.T("nav_log");
+            case 7: return LiveTxt.T("nav_fontes");
             default: return LiveTxt.T("nav_geral");
         }
     }
@@ -198,6 +214,7 @@ internal static class LiveMenu
         Nav(4, "nav_cats");
         Nav(5, "nav_avanc");
         Nav(6, "nav_log");
+        Nav(7, "nav_fontes");
         GUILayout.FlexibleSpace();
         GUILayout.Label(LiveTxt.T("menu_idioma"), sPeq);
         int atual = LiveTxt.Atual;
@@ -215,8 +232,7 @@ internal static class LiveMenu
     {
         Color antes = GUI.backgroundColor;
         bool ativo = LiveConfig.Ativo;
-        GUI.backgroundColor = ativo ? new Color(0.95f, 0.6f, 0.2f, 1f) : Teal;
-        if (GUILayout.Button(LiveTxt.T(ativo ? "pausar" : "comecar"), GUILayout.Width(largura), GUILayout.Height(altura)))
+        if (GUILayout.Button(LiveTxt.T(ativo ? "pausar" : "comecar"), ativo ? sAmbar : sSel, GUILayout.Width(largura), GUILayout.Height(altura)))
         {
             LiveConfig.Ativo = !ativo;
             if (LiveConfig.Ativo) LiveMotor.VarrerAgora = true;
@@ -225,7 +241,7 @@ internal static class LiveMenu
         GUI.backgroundColor = antes;
     }
 
-    // Botoes de escolha (substitui Toolbar/SelectionGrid): o selecionado fica em teal.
+    // Botoes de escolha (substitui Toolbar/SelectionGrid): o selecionado fica em teal (estilo sSel).
     private static int Escolha(int sel, string[] rot, int cols, float largura)
     {
         int res = sel;
@@ -236,8 +252,7 @@ internal static class LiveMenu
             GUILayout.BeginHorizontal();
             for (int j = i; j < i + cols && j < rot.Length; j++)
             {
-                GUI.backgroundColor = j == sel ? Teal : antes;
-                if (GUILayout.Button(rot[j], GUILayout.Width(bw), GUILayout.Height(24f))) res = j;
+                if (GUILayout.Button(rot[j], j == sel ? sSel : sBtn, GUILayout.Width(bw), GUILayout.Height(28f))) res = j;
             }
             GUILayout.EndHorizontal();
         }
@@ -257,8 +272,7 @@ internal static class LiveMenu
             for (int j = i; j < i + cols && j < rot.Length; j++)
             {
                 int bit = 1 << j;
-                GUI.backgroundColor = (mascara & bit) != 0 ? Teal : antes;
-                if (GUILayout.Button(rot[j], GUILayout.Width(bw), GUILayout.Height(24f))) res = mascara ^ bit;
+                if (GUILayout.Button(rot[j], (mascara & bit) != 0 ? sSel : sBtn, GUILayout.Width(bw), GUILayout.Height(28f))) res = mascara ^ bit;
             }
             GUILayout.EndHorizontal();
         }
@@ -266,24 +280,26 @@ internal static class LiveMenu
         return res;
     }
 
-    // Caixa de marcar: fica em teal quando ligada
+    // Caixa de marcar: quadradinho de 18 px (teal quando ligada) e o texto ao lado, os dois clicaveis
     private static bool Marca(bool valor, string texto)
     {
-        Color antes = GUI.backgroundColor;
-        if (valor) GUI.backgroundColor = Teal;
-        bool r = GUILayout.Toggle(valor, texto);
-        GUI.backgroundColor = antes;
-        return r;
+        GUILayout.BeginHorizontal();
+        bool clicou = GUILayout.Button("", valor ? sCaixaLig : sCaixaDesl, GUILayout.Width(18f), GUILayout.Height(18f));
+        if (GUILayout.Button(texto, sMarcar)) clicou = true;
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        return clicou ? !valor : valor;
     }
 
     private static void Nav(int idx, string chave)
     {
         Color antes = GUI.backgroundColor;
-        if (aba == idx) GUI.backgroundColor = Teal;
-        if (GUILayout.Button((idx + 1).ToString("00") + "   " + LiveTxt.T(chave), GUILayout.Height(30f)))
+        if (GUILayout.Button((idx + 1).ToString("00") + "    " + LiveTxt.T(chave), aba == idx ? sNavSel : sNav, GUILayout.Height(34f)))
         {
             aba = idx;
             rolagem = Vector2.zero;
+            confLimpar = false;
+            msgAvanc = "";
             pagina = 0;
             termoEdit = null;
             termoCat = null;
@@ -350,6 +366,7 @@ internal static class LiveMenu
             LiveConfig.Idioma = LiveConfig.Idiomas[novoIdioma][0];
             TradCache.TrocouIdioma();
             Glossario.TrocouIdioma();
+            FonteEscolhida.ConferirIdioma();   // fonte sem as letras do idioma novo volta para a do jogo
             termoEdit = null;
             Mudou();
         }
@@ -643,8 +660,7 @@ internal static class LiveMenu
         GUILayout.Space(ColEsp);
 
         Color antes = GUI.backgroundColor;
-        GUI.backgroundColor = Categorias.Cor(t.Cat);
-        if (GUILayout.Button(Cortar(Categorias.Nome(t.Cat), 14), GUILayout.Width(ColCat)))
+        if (GUILayout.Button(Cortar(Categorias.Nome(t.Cat), 14), Chip(Categorias.Cor(t.Cat), false), GUILayout.Width(ColCat)))
         {
             // abre/fecha a lista de categorias (em vez de trocar uma por uma)
             termoCat = termoCat == t ? null : t;
@@ -702,8 +718,7 @@ internal static class LiveMenu
             for (int j = i; j < i + Colunas && j < ordem.Length; j++)
             {
                 int c = ordem[j];
-                GUI.backgroundColor = c == t.Cat ? Teal : Categorias.Cor(c);
-                if (GUILayout.Button(Cortar(Categorias.Nome(c), 10), GUILayout.Width(80f)))
+                if (GUILayout.Button(Cortar(Categorias.Nome(c), 10), Chip(Categorias.Cor(c), c == t.Cat), GUILayout.Width(80f)))
                 {
                     if (c != t.Cat)
                     {
@@ -913,7 +928,25 @@ internal static class LiveMenu
             catMsg = LiveTxt.F("cat_reclass_n", n);
             catMsgErro = false;
         }
+        // modo com chave: a IA decide a categoria dos termos nao travados (opcional, gasta tokens)
+        if (LiveConfig.ProvedorId != LiveConfig.IdGoogle)
+        {
+            if (!ClassificadorIA.Rodando)
+            {
+                if (GUILayout.Button(LiveTxt.T("cat_reclass_ia"), GUILayout.Width(220f)))
+                {
+                    catMsg = "";
+                    ClassificadorIA.Iniciar(LiveDriver.Instancia);
+                }
+            }
+            else if (GUILayout.Button(LiveTxt.T("cia_parar"), GUILayout.Width(220f))) ClassificadorIA.Parar();
+        }
         GUILayout.EndHorizontal();
+        if (LiveConfig.ProvedorId != LiveConfig.IdGoogle)
+        {
+            GUILayout.Label(LiveTxt.T("cat_reclass_ia_dica"), sPeq);
+            if (ClassificadorIA.Status.Length > 0) GUILayout.Label(ClassificadorIA.Status, ClassificadorIA.StatusErro ? sErro : sOk);
+        }
         if (catMsg.Length > 0) GUILayout.Label(catMsg, catMsgErro ? sErro : sOk);
     }
 
@@ -1004,29 +1037,25 @@ internal static class LiveMenu
     private static void PaginaAvancado()
     {
         bool gratis = LiveConfig.ProvedorId == LiveConfig.IdGoogle;
-        int maxRpm = gratis ? LiveMotor.GoogleMaxRpm : 600;
-        if (LiveConfig.Rpm > maxRpm)
-        {
-            LiveConfig.Rpm = maxRpm;
-            campoRpm = maxRpm.ToString();
-            LiveConfig.Marcar();
-        }
+        int maxRpm = 600;
 
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(LiveTxt.T("rpm"), GUILayout.Width(170f));
-        if (GUILayout.Button("-", GUILayout.Width(28f))) MudarRpm(-5, maxRpm);
-        string nrpm = GUILayout.TextField(campoRpm, GUILayout.Width(60f));
-        if (nrpm != campoRpm)
+        // modo gratis: o ritmo e automatico (um pedido por vez); pedidos por minuto e lote so valem para IA
+        if (gratis) GUILayout.Label(LiveTxt.T("rpm_gratis"), sPeq);
+        else
         {
-            campoRpm = nrpm;
-            int v;
-            if (int.TryParse(nrpm, out v)) { LiveConfig.Rpm = Mathf.Clamp(v, 1, maxRpm); LiveConfig.Marcar(); }
-        }
-        if (GUILayout.Button("+", GUILayout.Width(28f))) MudarRpm(5, maxRpm);
-        GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(LiveTxt.T("rpm"), GUILayout.Width(170f));
+            if (GUILayout.Button("-", GUILayout.Width(28f))) MudarRpm(-5, maxRpm);
+            string nrpm = GUILayout.TextField(campoRpm, GUILayout.Width(60f));
+            if (nrpm != campoRpm)
+            {
+                campoRpm = nrpm;
+                int v;
+                if (int.TryParse(nrpm, out v)) { LiveConfig.Rpm = Mathf.Clamp(v, 1, maxRpm); LiveConfig.Marcar(); }
+            }
+            if (GUILayout.Button("+", GUILayout.Width(28f))) MudarRpm(5, maxRpm);
+            GUILayout.EndHorizontal();
 
-        if (!gratis)
-        {
             GUILayout.BeginHorizontal();
             GUILayout.Label(LiveTxt.T("lote"), GUILayout.Width(170f));
             string nlote = GUILayout.TextField(campoLote, GUILayout.Width(60f));
@@ -1037,8 +1066,8 @@ internal static class LiveMenu
                 if (int.TryParse(nlote, out v2)) { LiveConfig.Lote = Mathf.Clamp(v2, 1, 30); LiveConfig.Marcar(); }
             }
             GUILayout.EndHorizontal();
+            GUILayout.Label(LiveTxt.T("rpm_aviso"), sPeq);
         }
-        GUILayout.Label(LiveTxt.T("rpm_aviso"), sPeq);
         GUILayout.Space(8f);
 
         bool botao = Marca(LiveConfig.BotaoVisivel, LiveTxt.T("botao_canto"));
@@ -1047,19 +1076,174 @@ internal static class LiveMenu
             LiveConfig.BotaoVisivel = botao;
             LiveConfig.Marcar();
         }
+
+        // contexto para a IA (so vale no modo com chave)
+        bool ctx = Marca(LiveConfig.Contexto, LiveTxt.T("contexto"));
+        if (ctx != LiveConfig.Contexto)
+        {
+            LiveConfig.Contexto = ctx;
+            LiveConfig.Marcar();
+        }
+        GUILayout.Label(LiveTxt.T("contexto_dica"), sPeq);
+
+        // deixar a IA pensar (melhor, mais lento) ou pedir o minimo (mais rapido)
+        bool rac = Marca(LiveConfig.Raciocinio, LiveTxt.T("raciocinio"));
+        if (rac != LiveConfig.Raciocinio)
+        {
+            LiveConfig.Raciocinio = rac;
+            LiveConfig.Marcar();
+            Provedores.LimparRaciocinio();
+        }
+        GUILayout.Label(LiveTxt.T("raciocinio_dica"), sPeq);
+        GUILayout.Space(8f);
+
+        // tamanho minimo da fonte quando o texto nao cabe
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_min"), GUILayout.Width(250f));
+        if (GUILayout.Button("-", GUILayout.Width(28f))) MudarFonteMin(-5);
+        GUILayout.Label(LiveConfig.FonteMin + "%", GUILayout.Width(50f));
+        if (GUILayout.Button("+", GUILayout.Width(28f))) MudarFonteMin(5);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_min_dica"), sPeq);
+        GUILayout.Space(8f);
+
         GUILayout.Space(10f);
 
-        if (GUILayout.Button(LiveTxt.T("limpar_cache"), GUILayout.Height(28f)))
+        // pre-traduzir o que ja esta carregado (menus e janelas escondidos)
+        if (GUILayout.Button(LiveTxt.T("pre_trad"), GUILayout.Height(28f)))
         {
-            TradCache.Limpar();
-            Glossario.LimparNaoTravados();
-            termoEdit = null;
-            LiveMotor.ZerarContadores();
-            Mudou();   // Reiniciar: a tela volta ao original e e traduzida de novo
-            LiveLog.Info("lg_cache_limpo", LiveConfig.Idioma);
+            confLimpar = false;
+            if (!LiveConfig.Ativo)
+            {
+                msgAvanc = LiveTxt.T("pre_pausado");
+                msgAvancErro = true;
+            }
+            else
+            {
+                msgAvanc = LiveTxt.F("pre_ok", LiveDriver.PreTraduzir());
+                msgAvancErro = false;
+            }
         }
+        GUILayout.Label(LiveTxt.T(gratis ? "pre_dica_gratis" : "pre_dica"), sPeq);
+        GUILayout.Space(10f);
+
+        // exportar / importar glossario e cache
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(LiveTxt.T("comp_exportar"), GUILayout.Height(28f)))
+        {
+            confLimpar = false;
+            msgAvanc = Compartilhar.Exportar();
+            msgAvancErro = false;
+        }
+        if (GUILayout.Button(LiveTxt.T("comp_importar"), GUILayout.Height(28f)))
+        {
+            confLimpar = false;
+            msgAvanc = Compartilhar.Importar();
+            msgAvancErro = false;
+        }
+        if (GUILayout.Button(LiveTxt.T("log_pasta"), GUILayout.Height(28f), GUILayout.Width(130f)))
+        {
+            try { Application.OpenURL("file:///" + Compartilhar.Pasta.Replace('\\', '/')); }
+            catch (Exception e) { LiveLog.Erro("le_parte", e, "open folder"); }
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.F("comp_dica", LiveConfig.Idioma), sPeq);
+        if (msgAvanc.Length > 0) GUILayout.Label(msgAvanc, msgAvancErro ? sErro : sOk);
+        GUILayout.Space(10f);
+
+        // limpar cache: pede um segundo clique (apaga tudo do idioma e nao tem volta)
+        Color corAntes = GUI.backgroundColor;
+        if (GUILayout.Button(LiveTxt.T(confLimpar ? "limpar_conf" : "limpar_cache"), confLimpar ? sPerigo : sBtn, GUILayout.Height(28f)))
+        {
+            if (!confLimpar)
+            {
+                confLimpar = true;
+            }
+            else
+            {
+                confLimpar = false;
+                TradCache.Limpar();
+                Glossario.LimparNaoTravados();
+                termoEdit = null;
+                LiveMotor.ZerarContadores();
+                Mudou();   // Reiniciar: a tela volta ao original e e traduzida de novo
+                LiveLog.Info("lg_cache_limpo", LiveConfig.Idioma);
+                msgAvanc = LiveTxt.T("limpar_feito");
+                msgAvancErro = false;
+            }
+        }
+        GUI.backgroundColor = corAntes;
+        if (confLimpar) GUILayout.Label(LiveTxt.F("limpar_aviso", TradCache.Total), sErro);
         GUILayout.Space(10f);
         GUILayout.Label(LiveTxt.T("aviso_teclas"), sPeq);
+    }
+
+    // ---------------- aba 8: Fontes ----------------
+
+    private static void PaginaFontes()
+    {
+        GUILayout.Label(LiveTxt.F("fonte_trad_dica", FonteEscolhida.Quantas - 1), sPeq);
+        GUILayout.Space(6f);
+
+        int sel = FonteEscolhida.Indice;
+        int n = FonteEscolhida.Quantas;
+        const int cols = 3;
+        float bw = Mathf.Floor((larguraUtil - 4f * (cols - 1)) / cols);
+        Color antes = GUI.backgroundColor;
+        for (int i = 0; i < n; i += cols)
+        {
+            GUILayout.BeginHorizontal();
+            for (int j = i; j < i + cols && j < n; j++)
+            {
+                string nome = j == 0 ? LiveTxt.T("fonte_original") : FonteEscolhida.Nome(j);
+                GUIStyle est = EstiloPrevia(j, j == sel);
+                if (GUILayout.Button(est != null ? "" : nome, est != null ? est : (j == sel ? sSel : sBtn), GUILayout.Width(bw), GUILayout.Height(38f)))
+                    FonteEscolhida.Escolher(j);
+            }
+            GUILayout.EndHorizontal();
+        }
+        GUI.backgroundColor = antes;
+
+        GUILayout.Space(10f);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(LiveTxt.T("fonte_pasta"), GUILayout.Height(28f), GUILayout.Width(180f)))
+        {
+            try { Application.OpenURL("file:///" + FonteEscolhida.PastaUsuario.Replace('\\', '/')); }
+            catch (Exception e) { LiveLog.Erro("le_parte", e, "open folder"); }
+        }
+        if (GUILayout.Button(LiveTxt.T("fonte_atualizar"), GUILayout.Height(28f), GUILayout.Width(180f))) FonteEscolhida.Recarregar();
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_pasta_dica"), sPeq);
+    }
+
+    // Estilo cujo fundo e a imagem do botao com o nome na propria fonte. So a coluna lisa antes da
+    // borda direita estica (9-slice), entao o texto nao deforma. null = fonte sem imagem.
+    private static readonly Dictionary<string, GUIStyle> estilosPrevia = new Dictionary<string, GUIStyle>();
+    private static int versaoPrevias = -1;
+
+    private static GUIStyle EstiloPrevia(int j, bool selecionada)
+    {
+        if (versaoPrevias != FonteEscolhida.Versao) { estilosPrevia.Clear(); versaoPrevias = FonteEscolhida.Versao; }
+        string chave = FonteEscolhida.Nome(j) + (selecionada ? "|s" : "|n");
+        GUIStyle e;
+        if (estilosPrevia.TryGetValue(chave, out e)) return e;
+        e = null;
+        Texture2D normal = FonteEscolhida.Previa(j, selecionada ? "_sel" : "");
+        Texture2D foco = selecionada ? normal : FonteEscolhida.Previa(j, "_hover");
+        if (normal != null)
+        {
+            if (foco == null) foco = normal;
+            e = new GUIStyle(GUI.skin.label);
+            e.normal.background = normal;
+            e.hover.background = foco; e.active.background = foco; e.focused.background = normal;
+            e.border = new RectOffset(Mathf.Max(0, normal.width - 9), 8, 0, 0);
+            e.margin = new RectOffset(2, 2, 2, 2);
+            e.padding = new RectOffset(0, 0, 0, 0);
+        }
+        estilosPrevia[chave] = e;
+        return e;
     }
 
     // ---------------- aba 7: Log ----------------
@@ -1100,6 +1284,12 @@ internal static class LiveMenu
         int ate = Mathf.Max(0, total - 150);
         for (int i = total - 1; i >= ate; i--)
             GUILayout.Label(LiveLog.Texto(i), LiveLog.Ruim(i) ? sErro : sPeq);
+    }
+
+    private static void MudarFonteMin(int delta)
+    {
+        LiveConfig.FonteMin = Mathf.Clamp(LiveConfig.FonteMin + delta, 50, 90);
+        LiveConfig.Marcar();
     }
 
     private static void MudarRpm(int delta, int maxRpm)
@@ -1151,6 +1341,181 @@ internal static class LiveMenu
 
         sOk = new GUIStyle(sPeq);
         sOk.normal.textColor = new Color(0.45f, 1f, 0.7f);
+
+        Color texto = Hex(0xe6edf3), cinza = Hex(0x8b98a5), escuro = Hex(0x04201c);
+        sBtn = Botao(Hex(0x1b2128), Hex(0x252d36), Hex(0x12171c), texto, false);
+        sSel = Botao(Hex(0x2dd4bf), Hex(0x5ee6d3), Hex(0x22a897), escuro, true);
+        sAmbar = Botao(Hex(0xf59e0b), Hex(0xfbbf24), Hex(0xc27c06), Hex(0x231500), true);
+        sPerigo = Botao(Hex(0xef4444), Hex(0xf87171), Hex(0xb91c1c), Color.white, true);
+
+        sNav = Botao(new Color(0f, 0f, 0f, 0f), Hex(0x161b21), Hex(0x12302d), cinza, false);
+        sNav.hover.textColor = texto;
+        sNav.alignment = TextAnchor.MiddleLeft;
+        sNav.padding = new RectOffset(14, 10, 6, 6);
+        sNav.fontSize = 14;
+        sNavSel = Botao(Hex(0x12302d), Hex(0x12302d), Hex(0x12302d), Hex(0x2dd4bf), true);
+        sNavSel.alignment = TextAnchor.MiddleLeft;
+        sNavSel.padding = new RectOffset(14, 10, 6, 6);
+        sNavSel.fontSize = 14;
+
+        sCampo = new GUIStyle(GUI.skin.textField);
+        sCampo.normal.background = Redondo(Hex(0x0b0e11), Hex(0x262e37));
+        sCampo.hover.background = Redondo(Hex(0x0b0e11), Hex(0x3a4651));
+        sCampo.focused.background = Redondo(Hex(0x0b0e11), Hex(0x2dd4bf));
+        sCampo.active.background = sCampo.focused.background;
+        sCampo.onNormal.background = sCampo.normal.background;
+        sCampo.onFocused.background = sCampo.focused.background;
+        sCampo.normal.textColor = sCampo.hover.textColor = sCampo.focused.textColor = sCampo.active.textColor = texto;
+        sCampo.border = new RectOffset(6, 6, 6, 6);
+        sCampo.padding = new RectOffset(8, 8, 5, 5);
+        sCampo.fontSize = 13;
+
+        // caixa de marcar: quadradinho de 18 px a parte (sCaixa*) e o texto num botao sem fundo (sMarcar)
+        texMarcaDesl = Caixinha(false, Hex(0x0b0e11), Hex(0x3a4651));
+        texMarcaFoco = Caixinha(false, Hex(0x0b0e11), Hex(0x8b98a5));
+        texMarcaLig = Caixinha(true, Hex(0x2dd4bf), Hex(0x2dd4bf));
+        sCaixaDesl = new GUIStyle(GUI.skin.label);
+        sCaixaDesl.border = new RectOffset(0, 0, 0, 0);
+        sCaixaDesl.padding = new RectOffset(0, 0, 0, 0);
+        sCaixaDesl.overflow = new RectOffset(0, 0, 0, 0);
+        sCaixaDesl.normal.background = texMarcaDesl; sCaixaDesl.focused.background = texMarcaDesl;
+        sCaixaDesl.hover.background = texMarcaFoco; sCaixaDesl.active.background = texMarcaFoco;
+        sCaixaDesl.margin = new RectOffset(4, 6, 5, 3);
+        sCaixaLig = new GUIStyle(sCaixaDesl);
+        sCaixaLig.normal.background = texMarcaLig; sCaixaLig.focused.background = texMarcaLig;
+        sCaixaLig.hover.background = texMarcaLig; sCaixaLig.active.background = texMarcaLig;
+        sMarcar = new GUIStyle(GUI.skin.label);
+        sMarcar.border = new RectOffset(0, 0, 0, 0);
+        sMarcar.overflow = new RectOffset(0, 0, 0, 0);
+        sMarcar.padding = new RectOffset(0, 0, 3, 3);
+        sMarcar.margin = new RectOffset(0, 4, 3, 3);
+        sMarcar.alignment = TextAnchor.MiddleLeft;
+        sMarcar.wordWrap = true;
+        sMarcar.stretchWidth = false;
+        sMarcar.fontSize = 13;
+        sMarcar.normal.textColor = sMarcar.hover.textColor = sMarcar.active.textColor = texto;
+        sMarcar.onNormal.textColor = sMarcar.onHover.textColor = sMarcar.onActive.textColor = texto;
+
+        sBarra = new GUIStyle(GUI.skin.verticalScrollbar);
+        sBarra.normal.background = Redondo(Hex(0x0b0e11), Hex(0x0b0e11));
+        sBarra.border = new RectOffset(6, 6, 6, 6);
+        sBarra.fixedWidth = 10f;
+        sBarraPolegar = new GUIStyle(GUI.skin.verticalScrollbarThumb);
+        sBarraPolegar.normal.background = Redondo(Hex(0x2a333d), Hex(0x2a333d));
+        sBarraPolegar.border = new RectOffset(6, 6, 6, 6);
+        sBarraPolegar.fixedWidth = 10f;
+    }
+
+    // Durante o desenho da janela, os estilos padrao (usados pelos GUILayout.Button/TextField sem estilo)
+    // viram os da proposta B; depois voltam, para nao mudar outros paineis.
+    private static void TrocarSkin()
+    {
+        GUISkin k = GUI.skin;
+        skBotao = k.button; skCampo = k.textField; skMarcar = k.toggle; skBarra = k.verticalScrollbar; skPolegar = k.verticalScrollbarThumb;
+        k.button = sBtn; k.textField = sCampo; k.verticalScrollbar = sBarra; k.verticalScrollbarThumb = sBarraPolegar;
+    }
+
+    private static void VoltarSkin()
+    {
+        GUISkin k = GUI.skin;
+        if (skBotao != null) { k.button = skBotao; k.textField = skCampo; k.toggle = skMarcar; k.verticalScrollbar = skBarra; k.verticalScrollbarThumb = skPolegar; }
+    }
+
+    // etiqueta de categoria: fundo escuro puxado para a cor e texto na cor (selecionada: fundo na cor, texto escuro)
+    private static GUIStyle Chip(Color cor, bool selecionado)
+    {
+        GUIStyle[] par;
+        if (!chips.TryGetValue(cor, out par))
+        {
+            Color fundo = Color.Lerp(Hex(0x161b21), cor, 0.22f);
+            par = new GUIStyle[2];
+            par[0] = Botao(fundo, Color.Lerp(fundo, cor, 0.15f), fundo, cor, false);
+            par[1] = Botao(cor, cor, cor, Hex(0x0b0e11), true);
+            par[0].fontSize = par[1].fontSize = 12;
+            chips[cor] = par;
+        }
+        return par[selecionado ? 1 : 0];
+    }
+
+    private static GUIStyle Botao(Color normal, Color hover, Color ativo, Color texto, bool negrito)
+    {
+        GUIStyle b = new GUIStyle(GUI.skin.button);
+        Texture2D n = Redondo(normal, normal), h = Redondo(hover, hover), a = Redondo(ativo, ativo);
+        b.normal.background = n; b.hover.background = h; b.active.background = a; b.focused.background = n;
+        b.onNormal.background = n; b.onHover.background = h; b.onActive.background = a; b.onFocused.background = n;
+        b.normal.textColor = b.hover.textColor = b.active.textColor = b.focused.textColor = texto;
+        b.onNormal.textColor = b.onHover.textColor = b.onActive.textColor = b.onFocused.textColor = texto;
+        b.border = new RectOffset(6, 6, 6, 6);
+        b.padding = new RectOffset(10, 10, 5, 5);
+        b.fontSize = 13;
+        b.fontStyle = negrito ? FontStyle.Bold : FontStyle.Normal;
+        b.alignment = TextAnchor.MiddleCenter;
+        return b;
+    }
+
+    private static Color Hex(int rgb)
+    {
+        return new Color(((rgb >> 16) & 255) / 255f, ((rgb >> 8) & 255) / 255f, (rgb & 255) / 255f, 1f);
+    }
+
+    // retangulo arredondado 16x16 (raio 6) com borda de 1 px, para esticar com border 6
+    private static Texture2D Redondo(Color fundo, Color borda)
+    {
+        const int N = 16;
+        const float R = 6f;
+        Texture2D t = new Texture2D(N, N, TextureFormat.RGBA32, false);
+        t.wrapMode = TextureWrapMode.Clamp;
+        t.filterMode = FilterMode.Bilinear;
+        for (int y = 0; y < N; y++)
+            for (int x = 0; x < N; x++)
+            {
+                // distancia ate a borda do retangulo arredondado (negativa = dentro)
+                float cx = Mathf.Clamp(x + 0.5f, R, N - R), cy = Mathf.Clamp(y + 0.5f, R, N - R);
+                float d = Mathf.Sqrt((x + 0.5f - cx) * (x + 0.5f - cx) + (y + 0.5f - cy) * (y + 0.5f - cy)) - R;
+                float alfa = Mathf.Clamp01(0.5f - d);
+                Color c = d > -1.5f ? borda : fundo;
+                c.a *= alfa;
+                t.SetPixel(x, y, c);
+            }
+        t.Apply();
+        t.hideFlags = HideFlags.HideAndDontSave;
+        return t;
+    }
+
+    // caixinha de marcar 18x18; ligada leva um "v" escuro
+    private static Texture2D Caixinha(bool ligada, Color fundo, Color borda)
+    {
+        const int N = 18;
+        const float R = 4f;
+        Texture2D t = new Texture2D(N, N, TextureFormat.RGBA32, false);
+        t.wrapMode = TextureWrapMode.Clamp;
+        Color marca = Hex(0x04201c);
+        for (int y = 0; y < N; y++)
+            for (int x = 0; x < N; x++)
+            {
+                float cx = Mathf.Clamp(x + 0.5f, R, N - R), cy = Mathf.Clamp(y + 0.5f, R, N - R);
+                float d = Mathf.Sqrt((x + 0.5f - cx) * (x + 0.5f - cx) + (y + 0.5f - cy) * (y + 0.5f - cy)) - R;
+                Color c = d > -1.5f ? borda : fundo;
+                if (ligada)
+                {
+                    // "v": perna curta de (4,9) a (7,6) e longa de (7,6) a (14,13) (y cresce para cima na textura)
+                    float px = x + 0.5f, py = y + 0.5f;
+                    if (DistSeg(px, py, 4.5f, 9.5f, 7.5f, 6f) < 1.3f || DistSeg(px, py, 7.5f, 6f, 13.5f, 12.5f) < 1.3f) c = marca;
+                }
+                c.a *= Mathf.Clamp01(0.5f - d);
+                t.SetPixel(x, y, c);
+            }
+        t.Apply();
+        t.hideFlags = HideFlags.HideAndDontSave;
+        return t;
+    }
+
+    private static float DistSeg(float px, float py, float ax, float ay, float bx, float by)
+    {
+        float vx = bx - ax, vy = by - ay;
+        float u = Mathf.Clamp01(((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy));
+        float dx = ax + u * vx - px, dy = ay + u * vy - py;
+        return Mathf.Sqrt(dx * dx + dy * dy);
     }
 
     private static Texture2D NovaTextura(Color cor)

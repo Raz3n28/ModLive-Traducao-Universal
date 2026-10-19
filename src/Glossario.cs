@@ -112,12 +112,18 @@ internal static class Glossario
     // Chamado pelo motor quando uma traducao nova chega (ou sai do cache): se for um termo curto, entra no glossario.
     public static void Auto(string original, string traducao, string pista)
     {
+        Auto(original, traducao, pista, -1);
+    }
+
+    // catIA = categoria que a IA escolheu (modo com chave), -1 = nao veio
+    public static void Auto(string original, string traducao, string pista, int catIA)
+    {
         try
         {
             if (!Termo(original) || string.IsNullOrEmpty(traducao)) return;
             if (traducao.Length > 80 || traducao == original) return;
             if (mapa.ContainsKey(original)) return;
-            Criar(original, traducao, Categorizar(original, pista), false);
+            Criar(original, traducao, Categorizar(original, pista, catIA), false);
             Marcar();
         }
         catch { }
@@ -214,24 +220,110 @@ internal static class Glossario
         return n;
     }
 
+    private static string Conteudo()
+    {
+        string[] linhas = new string[lista.Count];
+        for (int i = 0; i < lista.Count; i++)
+        {
+            TermoGlossario t = lista[i];
+            linhas[i] = Escapar(t.Original) + "\t" + Escapar(t.Traducao) + "\t" + t.Cat + "\t" + (t.Travado ? "1" : "0");
+        }
+        return string.Join("\n", linhas) + (linhas.Length > 0 ? "\n" : "");
+    }
+
+    // Exportar (aba Avancado): o glossario no mesmo formato do arquivo do mod.
+    public static int Exportar(string arq)
+    {
+        File.WriteAllText(arq, Conteudo(), new UTF8Encoding(false));
+        return lista.Count;
+    }
+
+    // Importar: so entram termos que o jogador ainda nao tem (os dele, travados ou nao, ficam como estao).
+    public static int Importar(string arq)
+    {
+        string[] linhas = File.ReadAllLines(arq, Encoding.UTF8);
+        int n = 0;
+        for (int i = 0; i < linhas.Length; i++)
+        {
+            string[] p = linhas[i].Split('\t');
+            if (p.Length < 2) continue;
+            string orig = Desescapar(p[0]);
+            string trad = Desescapar(p[1]);
+            if (orig.Length == 0 || trad.Length == 0 || mapa.ContainsKey(orig)) continue;
+            int cat = 0;
+            if (p.Length > 2) int.TryParse(p[2], out cat);
+            if (!Categorias.Existe(cat)) cat = 0;
+            Criar(orig, trad, cat, p.Length > 3 && p[3] == "1");
+            n++;
+        }
+        if (n > 0) Marcar();
+        return n;
+    }
+
     public static void Salvar()
     {
         sujo = false;
         try
         {
-            string[] linhas = new string[lista.Count];
-            for (int i = 0; i < lista.Count; i++)
-            {
-                TermoGlossario t = lista[i];
-                linhas[i] = Escapar(t.Original) + "\t" + Escapar(t.Traducao) + "\t" + t.Cat + "\t" + (t.Travado ? "1" : "0");
-            }
             string idioma = idiomaCarregado ?? LiveConfig.Idioma;
-            File.WriteAllText(Arquivo(idioma), string.Join("\n", linhas) + (linhas.Length > 0 ? "\n" : ""), new UTF8Encoding(false));
+            File.WriteAllText(Arquivo(idioma), Conteudo(), new UTF8Encoding(false));
         }
         catch (Exception e)
         {
             LiveLog.Erro("le_gravar", e, LiveLog.T("it_glos"));
         }
+    }
+
+    // Termos do glossario que aparecem DENTRO dos textos (vai no pedido para a IA, para o nome sair igual
+    // em frases longas). Travados primeiro (sao escolha do jogador). Texto que e o proprio termo nao conta:
+    // esse ja sai do glossario sem ir para a IA.
+    public static List<TermoGlossario> TermosEm(List<string> textos, int max, int maxChars)
+    {
+        List<TermoGlossario> r = new List<TermoGlossario>();
+        if (textos == null || textos.Count == 0 || lista.Count == 0) return r;
+        int chars = 0;
+        for (int passo = 0; passo < 2; passo++)
+        {
+            bool travados = passo == 0;
+            for (int i = 0; i < lista.Count; i++)
+            {
+                if (r.Count >= max || chars >= maxChars) return r;
+                TermoGlossario t = lista[i];
+                if (t.Travado != travados || t.Original.Length < 2) continue;
+                for (int k = 0; k < textos.Count; k++)
+                {
+                    string s = textos[k];
+                    if (s.Length <= t.Original.Length) continue;
+                    if (!Contem(s, t.Original)) continue;
+                    r.Add(t);
+                    chars += t.Original.Length + t.Traducao.Length + 6;
+                    break;
+                }
+            }
+        }
+        return r;
+    }
+
+    // Procura o termo no texto. Termo que comeca/termina com letra latina precisa estar separado
+    // (senao "Ion" acharia "Station"). Chines, japones e coreano nao tem espaco entre palavras.
+    private static bool Contem(string s, string termo)
+    {
+        int ini = 0;
+        while (true)
+        {
+            int p = s.IndexOf(termo, ini, StringComparison.Ordinal);
+            if (p < 0) return false;
+            int fim = p + termo.Length;
+            bool antesOk = p == 0 || !Latina(termo[0]) || !char.IsLetterOrDigit(s[p - 1]);
+            bool depoisOk = fim >= s.Length || !Latina(termo[termo.Length - 1]) || !char.IsLetterOrDigit(s[fim]);
+            if (antesOk && depoisOk) return true;
+            ini = p + 1;
+        }
+    }
+
+    private static bool Latina(char c)
+    {
+        return char.IsLetterOrDigit(c) && c < '\u3000';
     }
 
     // ---------------- o que vale como "termo" ----------------
@@ -261,10 +353,18 @@ internal static class Glossario
     // pista = nomes do objeto de texto e dos pais na tela, em minusculas (ex.: "btn_ok/menu/")
     public static int Categorizar(string texto, string pista)
     {
+        return Categorizar(texto, pista, -1);
+    }
+
+    public static int Categorizar(string texto, string pista, int catIA)
+    {
         string p = pista ?? "";
         // 0) palavras-chave das categorias criadas pelo jogador (ganham de tudo)
         int c = Categorias.PorTexto(texto, 1);
         if (c >= 0) return c;
+
+        // 0b) modo com chave: a categoria que a IA escolheu (ela entende o que o termo e)
+        if (catIA >= 0 && Categorias.Existe(catIA)) return catIA;
 
         // 1) pista "de significado" no nome do objeto
         if (Tem(p, "faction")) return 1;

@@ -45,7 +45,7 @@ internal static class TradCache
             string l = linhas[i];
             int tab = l.IndexOf('\t');
             if (tab <= 0) continue;
-            mapa[Desescapar(l.Substring(0, tab))] = Desescapar(l.Substring(tab + 1));
+            mapa[Desescapar(l.Substring(0, tab))] = Provedores.Composto(Desescapar(l.Substring(tab + 1)));
         }
         try
         {
@@ -152,6 +152,36 @@ internal static class TradCache
             LiveLog.Erro("le_gravar", e, LiveLog.T("it_cache"));
         }
         pendentes.Clear();
+    }
+
+    // Exportar (aba Avancado): o cache inteiro num arquivo, uma linha por texto (sem repeticoes).
+    public static int Exportar(string arq)
+    {
+        Flush();
+        StringBuilder sb = new StringBuilder();
+        foreach (KeyValuePair<string, string> kv in mapa) sb.Append(Escapar(kv.Key)).Append('\t').Append(Escapar(kv.Value)).Append('\n');
+        File.WriteAllText(arq, sb.ToString(), new UTF8Encoding(false));
+        return mapa.Count;
+    }
+
+    // Importar: so entra o que ainda nao esta no cache (o que o jogador ja tem nao muda).
+    public static int Importar(string arq)
+    {
+        string[] linhas = File.ReadAllLines(arq, Encoding.UTF8);
+        int n = 0;
+        for (int i = 0; i < linhas.Length; i++)
+        {
+            string l = linhas[i];
+            int tab = l.IndexOf('\t');
+            if (tab <= 0) continue;
+            string k = Desescapar(l.Substring(0, tab));
+            string v = Desescapar(l.Substring(tab + 1));
+            if (v.Length == 0 || mapa.ContainsKey(k)) continue;
+            Add(k, v);
+            n++;
+        }
+        Flush();
+        return n;
     }
 
     public static void Limpar()

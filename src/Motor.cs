@@ -29,16 +29,23 @@ internal static class LiveMotor
     private static readonly Dictionary<string, string> pistas = new Dictionary<string, string>();
     // traducao antiga -> traducao nova (quando o jogador edita um termo no glossario, o texto na tela troca na hora)
     private static readonly Dictionary<string, string> substituicoes = new Dictionary<string, string>();
+    // ultimas frases traduzidas (original, traducao): vao como contexto no pedido para a IA
+    private static readonly List<string[]> recentes = new List<string[]>();
+    private const int MaxRecentes = 3;
 
-    private const int MaxEmVoo = 3;
-    // Google gratis (endpoint nao oficial): pouco pedido por vez e ritmo baixo, senao responde 429
-    public const int GoogleMaxRpm = 20;
+    // IA: pedidos ao mesmo tempo acompanham os "pedidos por minuto" (60 por minuto = 6 de uma vez), entre 3 e 8.
+    // Quem esta num plano gratis de IA e toma 429 baixa os pedidos por minuto e isto baixa junto.
+    private static int MaxEmVoo { get { return Mathf.Clamp(LiveConfig.Rpm / 10, 3, 8); } }
+    // Google gratis (endpoint nao oficial): um pedido por vez (como o XUnity). Sem intervalo fixo: o proximo
+    // sai assim que o anterior volta, so com esta folga minima. Se der 429, o endereco fica de castigo e o
+    // motor passa para o proximo endereco (ver Castigar).
+    public const float GoogleIntervalo = 0.3f;
     // e cada pedido leva varios textos juntos (um por linha, como o XUnity), em vez de um so
     public const int GoogleLote = 10;
     public const int GoogleMaxChars = 800;      // por pedido (vai na URL, entao nao pode ser grande)
     public const int GoogleMaxTexto = 200;      // texto maior que isso vai sozinho num pedido
-    public const float GoogleEspera = 0.9f;     // espera a tela "parar" antes de enviar (junta mais textos no lote)
-    public const float GoogleEsperaMax = 3f;    // mas nunca espera mais que isso
+    public const float GoogleEspera = 0.4f;     // espera a tela "parar" antes de enviar (junta mais textos no lote)
+    public const float GoogleEsperaMax = 1.5f;  // mas nunca espera mais que isso
     private static float ultimaEntrada;
     private static float inicioEspera;
     public static int LotesOk;
@@ -159,6 +166,7 @@ internal static class LiveMotor
         tentativas.Clear();
         pistas.Clear();
         substituicoes.Clear();
+        recentes.Clear();
         fila.Clear();
         naFila.Clear();
         retraduzindo.Clear();
@@ -173,11 +181,33 @@ internal static class LiveMotor
     // Chamado quando o jogador mexe na chave/URL/modelo: tira as pausas e deixa tentar de novo.
     public static void Destravar()
     {
+        Provedores.LimparRaciocinio();   // modelo novo: tenta o raciocinio minimo de novo
         pausaAte = 0f;
         backoff = 0;
         falhou.Clear();
         tentativas.Clear();
         UltimoErro = "";
+    }
+
+    // Frases recentes para o contexto da IA (sem as que estao no proprio lote). Vazio se o jogador desligou.
+    public static List<string[]> Recentes(List<string> lote)
+    {
+        List<string[]> r = new List<string[]>();
+        if (!LiveConfig.Contexto) return r;
+        for (int i = 0; i < recentes.Count; i++)
+            if (lote == null || !lote.Contains(recentes[i][0])) r.Add(recentes[i]);
+        return r;
+    }
+
+    // so frases (nao termos curtos), e nao muito longas, para nao gastar token a toa
+    private static void LembrarRecente(string original, string traducao)
+    {
+        if (string.IsNullOrEmpty(traducao) || original.Length < 12 || original.Length > 300) return;
+        if (Glossario.Termo(original)) return;
+        for (int i = recentes.Count - 1; i >= 0; i--)
+            if (recentes[i][0] == original) recentes.RemoveAt(i);
+        recentes.Add(new string[] { original, traducao });
+        while (recentes.Count > MaxRecentes) recentes.RemoveAt(0);
     }
 
     // ---------------- o que traduzir ----------------
@@ -393,7 +423,7 @@ internal static class LiveMotor
             return;
         }
 
-        // Google: so envia quando o lote encheu, ou a tela ficou 0,9 s sem texto novo, ou ja esperou 3 s
+        // Google: so envia quando o lote encheu, ou a tela ficou 0,4 s sem texto novo, ou ja esperou 1,5 s
         if (p.Tipo == 0 && !reTrad && fila.Count < GoogleLote
             && agora - ultimaEntrada < GoogleEspera && agora - inicioEspera < GoogleEsperaMax) return;
 
@@ -432,9 +462,8 @@ internal static class LiveMotor
         }
         if (lote.Count == 0) return;
 
-        int rpm = Mathf.Max(1, LiveConfig.Rpm);
-        if (p.Tipo == 0 && rpm > GoogleMaxRpm) rpm = GoogleMaxRpm;
-        proximoEnvio = agora + 60f / rpm;
+        if (p.Tipo == 0) proximoEnvio = agora + GoogleIntervalo;
+        else proximoEnvio = agora + 60f / Mathf.Max(1, LiveConfig.Rpm);
         emVoo++;
         Pedidos++;
         drv.StartCoroutine(Enviar(p, lote, geracao, ep));
@@ -450,6 +479,17 @@ internal static class LiveMotor
     private static readonly float[] epCastigoAte = new float[Provedores.GoogleEndpoints];
     private static readonly int[] ep429 = new int[Provedores.GoogleEndpoints];
     private static readonly int[] epFormato = new int[Provedores.GoogleEndpoints];
+    // falhas seguidas de cada endereco (qualquer motivo). Muitas seguidas = o Google pode ter mudado o endereco.
+    private static readonly int[] epFalhas = new int[Provedores.GoogleEndpoints];
+    private const int AvisoFalhas = 5;
+
+    private static void FalhouEndereco(int ep)
+    {
+        if (ep < 0 || ep >= epFalhas.Length) return;
+        epFalhas[ep]++;
+        // avisa uma vez por sequencia (os castigos continuam sendo logados normalmente)
+        if (epFalhas[ep] == AvisoFalhas) LiveLog.Aviso("lg_ep_quebrado", Provedores.NomeGoogle(ep), AvisoFalhas);
+    }
 
     // segundos que faltam para o endereco sair do castigo (0 = livre). Usado na aba Log.
     public static int CastigoRestante(int ep)
@@ -529,7 +569,8 @@ internal static class LiveMotor
         bool google = p.Tipo == 0;
         if (codigo == 200)
         {
-            List<string> trad = Provedores.Interpretar(p, lote, corpo, ep);
+            List<string> catsIA;
+            List<string> trad = Provedores.Interpretar(p, lote, corpo, ep, out catsIA);
             if (lote.Count > 1)
             {
                 if (trad != null) LotesOk++; else LotesFallback++;
@@ -566,7 +607,8 @@ internal static class LiveMotor
                         string pista;
                         pistas.TryGetValue(lote[i], out pista);
                         pistas.Remove(lote[i]);
-                        Glossario.Auto(lote[i], trad[i], pista);
+                        Glossario.Auto(lote[i], trad[i], pista, catsIA != null ? Categorias.PorNome(catsIA[i]) : -1);
+                        LembrarRecente(lote[i], trad[i]);
                         Traduzidos++;
                     }
                     naFila.Remove(lote[i]);
@@ -581,7 +623,7 @@ internal static class LiveMotor
                     LiveLog.Info("lg_retraduzidos", reFeitos, Provedores.NomeGoogle(ep), TradCache.TotalProvisorios);
                 }
                 backoff = 0;
-                if (google) { ep429[ep] = 0; epFormato[ep] = 0; }
+                if (google) { ep429[ep] = 0; epFormato[ep] = 0; epFalhas[ep] = 0; }
                 UltimoErro = "";
                 VarrerAgora = true;
                 return;
@@ -591,6 +633,7 @@ internal static class LiveMotor
             ErroChave("e_formato");
             if (google)
             {
+                if (lote.Count == 1) FalhouEndereco(ep);
                 // lote que falhou: separa sem gastar tentativa. Texto sozinho que falhou: conta tentativa
                 // e, se o endereco falhar 3 vezes seguidas assim, ele fica 30 min parado.
                 if (lote.Count == 1 && ++epFormato[ep] >= 3)
@@ -615,6 +658,15 @@ internal static class LiveMotor
         else
             ErroChave("e_erro", codigo, string.IsNullOrEmpty(erro) ? "" : " - " + erro);
 
+        // o servico nao aceitou o "raciocinio minimo": desliga so isso para este provedor e tenta de novo
+        // sem gastar tentativa dos textos
+        if (!google && Provedores.ErroRaciocinio(codigo, corpo)
+            && Provedores.DesligarRaciocinio(p))
+        {
+            pausaAte = 0f;
+            for (int i = lote.Count - 1; i >= 0; i--) Devolver(lote[i], false, false);
+            return;
+        }
         if (codigo == 400)
         {
             // pode ser culpa de um texto especifico: conta tentativa
@@ -633,6 +685,7 @@ internal static class LiveMotor
                 if (retryAfter > castigo) castigo = retryAfter;
             }
             else castigo = 60f;
+            FalhouEndereco(ep);
             Castigar(ep, castigo, codigo == 0 ? LiveLog.T("lg_m_rede", string.IsNullOrEmpty(erro) ? "" : " (" + erro + ")") : LiveLog.T("lg_m_codigo", codigo));
             pausaAte = agora + 1f;
             for (int i = lote.Count - 1; i >= 0; i--) Devolver(lote[i], false, false);
@@ -686,21 +739,31 @@ internal static class LiveMotor
         }
         List<string> lote = new List<string>();
         lote.Add("你好，欢迎来到空间站！Welcome to the station!");
-        UnityWebRequest req = null;
-        string erro = null;
         int ep = GoogleEp;
-        try { req = Provedores.Montar(p, lote, ep); }
-        catch (Exception e) { erro = e.Message; }
-        if (req == null)
+        int codigo = 0;
+        string err = null;
+        string corpo = null;
+        // segunda volta so se o servico recusou o "raciocinio minimo" (ai vai sem ele)
+        for (int volta = 0; volta < 2; volta++)
         {
-            Teste = LiveTxt.F("t_erro", erro);
-            yield break;
+            UnityWebRequest req = null;
+            string erro = null;
+            try { req = Provedores.Montar(p, lote, ep); }
+            catch (Exception e) { erro = e.Message; }
+            if (req == null)
+            {
+                Teste = LiveTxt.F("t_erro", erro);
+                yield break;
+            }
+            yield return req.SendWebRequest();
+            codigo = (int)req.responseCode;
+            err = req.error;
+            corpo = req.downloadHandler != null ? req.downloadHandler.text : null;
+            req.Dispose();
+            if (p.Tipo != 0 && Provedores.ErroRaciocinio(codigo, corpo)
+                && Provedores.DesligarRaciocinio(p)) continue;
+            break;
         }
-        yield return req.SendWebRequest();
-        int codigo = (int)req.responseCode;
-        string err = req.error;
-        string corpo = req.downloadHandler != null ? req.downloadHandler.text : null;
-        req.Dispose();
         if (codigo == 200)
         {
             List<string> r = Provedores.Interpretar(p, lote, corpo, ep);

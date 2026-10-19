@@ -4,16 +4,19 @@ Translates the game [b]in real time[/b], right inside the game.
 
 [h2]Mod functions[/h2]
 [list]
-[*][b]Live translation[/b] into 20 languages.
+[*][b]Live translation[/b] into 18 languages.
 [*][b]Free mode[/b]: Google Translate, no key needed. Works right away, but it is [b]slower[/b] than using an API key (see below).
 [*][b]AI mode[/b]: use your own API key (DeepSeek, Gemini, Groq, OpenRouter, OpenAI, Claude, Ollama and others).
-[*][b]F8 menu[/b] in 6 languages (PT, EN, ES, RU, FR, DE) with tabs: General, Provider/API, Style, Glossary, Categories, Advanced.
+[*][b]F8 menu[/b] in 6 languages (PT, EN, ES, RU, FR, DE) with tabs: General, Provider/API, Style, Glossary, Categories, Advanced, Log, Fonts.
 [*][b]Translation style[/b] (faithful, natural, literal, very short) plus extra instructions for the AI.
 [*][b]Editable glossary[/b] with default and custom categories (keywords + AI instruction).
+[*][b]Consistent names[/b]: in AI mode, glossary terms are sent with each request, so names stay the same inside long sentences too.
+[*][b]Share your translation[/b]: export and import the glossary and cache.
 [*][b]Edit live[/b]: don't like a term's translation? Change it in real time, without closing the game.
 [*][b]Script filter[/b]: choose what to translate (Chinese, Japanese, Korean, Cyrillic, Latin, others).
 [*][b]Cache[/b]: each text is translated once and saved on your PC.
-[*][b]Auto font-size[/b] so the text fits.
+[*][b]Auto font-size[/b] so the text fits, also where a translated label would cover the one next to it.
+[*][b]Choose the translation font[/b]: 29 sci-fi style fonts included (Exo 2, Orbitron, Oxanium, Chakra Petch...), Windows fonts or your own .ttf. Only fonts with every letter of your language are listed.
 [/list]
 
 [h2]Free mode vs. your own API key[/h2]
@@ -29,3 +32,5 @@ Subscribe, enable the mod in Mods, restart the game, then press F8 or click the 
 [b]Your API key stays only on your PC.[/b] The mod does not change any game file. Do not use with another translation mod.
 
 Author: PauloRaz3n
+
+[b]Enjoying the mod?[/b] You can support me on Ko-fi: [url=https://ko-fi.com/pauloraz3n]ko-fi.com/pauloraz3n[/url]
