@@ -27,3 +27,12 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
     barra de titulo com etiqueta de estado e "x", cartoes nas abas, interruptor no lugar da caixa de marcar,
     animacoes (abrir, aba que desliza, interruptor, botao do canto pulsando com fila), barra da fila
     e transparencia do menu (aba Avancado > Aparencia).
+
+[ ] Aba Fontes nao segue o tema (no Claro fica com blocos pretos; nos outros o escolhido fica teal e os
+    botoes nao combinam com os das fontes do Windows).
+    Causa: as previas em v_common\Fontes\previas\*.png tem o fundo pintado na imagem (#1b2128, hover
+    #29323c, escolhida teal #2dd4bf), entao nao mudam com o tema.
+    Conserto: gerar as previas so com o nome da fonte em branco e fundo transparente; o menu desenha o botao
+    do tema (sBtn / sSel, igual "Original do jogo" e as do Windows) e pinta o nome por cima com a cor do
+    texto do tema (escolhida = cor do texto do destaque). Assim todos os botoes da aba ficam iguais em
+    todos os temas, e o nome continua escrito na propria fonte.
