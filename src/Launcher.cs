@@ -55,6 +55,8 @@ internal static class LiveBoot
         }
         try { LiveImgui.Iniciar(); }
         catch (Exception e) { LiveLog.Erro("le_parte", e, "IMGUI"); }
+        try { EscalaUI.Iniciar(); }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "UI scale"); }
         LiveLog.Info("lg_pronto");
         LiveLog.Info("==============================================");
     }

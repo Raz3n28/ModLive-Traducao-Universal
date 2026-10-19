@@ -46,10 +46,35 @@ internal static class LiveImgui
             return;
         }
 
+        hInst = h; hPatch = patch; hNovo = novoMetodo;
         int n = 0;
         n += Aplicar(typeof(GUI), NomesGUI, h, patch, novoMetodo);
         n += Aplicar(typeof(GUILayout), NomesLayout, h, patch, novoMetodo);
         LiveLog.Info("lg_imgui", n);
+    }
+
+    private static object hInst;
+    private static MethodInfo hPatch;
+    private static ConstructorInfo hNovo;
+
+    // usado por outras partes do mod (ex.: EscalaUI): poe um prefixo do Harmony em "alvo". false = sem Harmony ou falhou
+    public static bool Prefixar(MethodBase alvo, MethodInfo prefixo)
+    {
+        if (hInst == null || alvo == null || prefixo == null) return false;
+        try
+        {
+            object pre = hNovo.Invoke(new object[] { prefixo });
+            object[] args = new object[hPatch.GetParameters().Length];
+            args[0] = alvo;
+            args[1] = pre;
+            hPatch.Invoke(hInst, args);
+            return true;
+        }
+        catch (Exception e)
+        {
+            LiveLog.Erro("le_parte", e, "Harmony " + alvo.Name);
+            return false;
+        }
     }
 
     private static int Aplicar(Type tipo, string[] nomes, object h, MethodInfo patch, ConstructorInfo novoMetodo)

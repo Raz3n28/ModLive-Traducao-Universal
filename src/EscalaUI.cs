@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,6 +10,8 @@ using UnityEngine.UI;
 // - fonte (50% a 200%): multiplica o tamanho dos textos TMP_Text e UI.Text.
 // Guarda o valor original de cada um; se o jogo trocar o valor depois, o novo vira o original.
 // Tudo em 100% = devolve os originais e para de mexer. Janelas IMGUI (menus de outros mods) nao mudam.
+// O jogo pode reescrever a escala do CanvasScaler a todo quadro (a escala do mod piscava): com o Harmony,
+// o mod intercepta essa escrita e ja multiplica o valor do jogo pela escala escolhida.
 internal static class EscalaUI
 {
     public const int Min = 50, Max = 200;
@@ -27,6 +30,138 @@ internal static class EscalaUI
     private static float proxima;
     private static bool mexendo;            // ja mexeu em algo: precisa devolver ao voltar a 100%
     public static bool Mudou;               // o menu mudou um valor: aplica ja
+    private static bool proprio;            // o proprio mod esta escrevendo no CanvasScaler (o prefixo deixa passar)
+    private static readonly HashSet<int> avisados = new HashSet<int>();
+
+    // poe os prefixos do Harmony nos "set" do CanvasScaler (scaleFactor e referenceResolution)
+    public static void Iniciar()
+    {
+        const BindingFlags F = BindingFlags.Static | BindingFlags.NonPublic;
+        PropertyInfo pf = typeof(CanvasScaler).GetProperty("scaleFactor");
+        PropertyInfo pr = typeof(CanvasScaler).GetProperty("referenceResolution");
+        bool a = pf != null && LiveImgui.Prefixar(pf.GetSetMethod(), typeof(EscalaUI).GetMethod("PreFator", F));
+        bool b = pr != null && LiveImgui.Prefixar(pr.GetSetMethod(), typeof(EscalaUI).GetMethod("PreRef", F));
+        LiveLog.Info("UI scale: CanvasScaler hooked = " + (a && b));
+        Canvas.willRenderCanvases += AntesDeDesenhar;
+    }
+
+    // Canvas que estao com escala do mod (refeita a cada passada do Tick)
+    private static readonly List<CanvasScaler> vigiados = new List<CanvasScaler>();
+    private static readonly Dictionary<int, float> escritoCanvas = new Dictionary<int, float>();
+    private static readonly HashSet<int> avisadosCanvas = new HashSet<int>();
+
+    // Segunda protecao: se o jogo escreve direto no Canvas.scaleFactor (sem passar pelo CanvasScaler),
+    // logo antes de desenhar a tela o mod multiplica de novo o valor do jogo pela escala escolhida.
+    private static void AntesDeDesenhar()
+    {
+        if (vigiados.Count == 0) return;
+        proprio = true;
+        try
+        {
+            for (int i = 0; i < vigiados.Count; i++)
+            {
+                CanvasScaler c = vigiados[i];
+                if (!c || !c.isActiveAndEnabled) continue;
+                Canvas cv = c.GetComponent<Canvas>();
+                if (!cv || !cv.isRootCanvas) continue;
+                // o jogo pode ter reescrito o CanvasScaler sem passar pelo Harmony (funcao "inline"): refaz ja,
+                // e ja passa para o Canvas neste quadro (o CanvasScaler so atualiza no proximo)
+                float esperado = Esperado(c, cv);
+                if (AplicarUm(c))
+                {
+                    float e2 = Esperado(c, cv);
+                    if (e2 > 0f && Math.Abs(cv.scaleFactor - e2) > 0.001f) cv.scaleFactor = e2;
+                    esperado = e2;
+                }
+                // no modo "tamanho fixo" o Canvas deve ficar igual ao scaleFactor do CanvasScaler; se nao ficou, foi o jogo
+                if (c.uiScaleMode != CanvasScaler.ScaleMode.ConstantPixelSize) continue;
+                float f = Fator(c);
+                if (Math.Abs(f - 1f) < 0.001f) continue;
+                float atual = cv.scaleFactor;
+                if (esperado <= 0f || Math.Abs(atual - esperado) < 0.001f) continue;
+                int id = cv.GetInstanceID();
+                float ultimo;
+                if (escritoCanvas.TryGetValue(id, out ultimo) && Math.Abs(atual - ultimo) < 0.001f) continue;
+                // valor diferente do CanvasScaler e do que o mod escreveu: foi o jogo, e o valor dele e o original
+                if (avisadosCanvas.Count < 200 && avisadosCanvas.Add(id))
+                    LiveLog.Info("UI scale: the game sets Canvas.scaleFactor of '" + c.gameObject.name + "' directly");
+                float novo = atual * f;
+                cv.scaleFactor = novo;
+                escritoCanvas[id] = novo;
+            }
+        }
+        catch { }
+        finally { proprio = false; }
+    }
+
+    // escala que o CanvasScaler (ja com a escala do mod) coloca no Canvas; 0 = nao sei calcular
+    private static float Esperado(CanvasScaler c, Canvas cv)
+    {
+        if (c.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize) return c.scaleFactor;
+        if (c.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize) return 0f;
+        Vector2 rr = c.referenceResolution;
+        if (rr.x <= 0f || rr.y <= 0f) return 0f;
+        float w = Screen.width, h = Screen.height;     // o CanvasScaler usa o tamanho da tela
+        double s;
+        if (c.screenMatchMode == CanvasScaler.ScreenMatchMode.MatchWidthOrHeight)
+        {
+            double lw = Math.Log(w / rr.x, 2), lh = Math.Log(h / rr.y, 2);
+            double m = c.matchWidthOrHeight;
+            s = Math.Pow(2, lw + (lh - lw) * m);
+        }
+        else if (c.screenMatchMode == CanvasScaler.ScreenMatchMode.Expand) s = Math.Min(w / rr.x, h / rr.y);
+        else s = Math.Max(w / rr.x, h / rr.y);
+        return (float)s;
+    }
+
+    private static float Fator(CanvasScaler c)
+    {
+        return LiveConfig.EscalaUI / 100f * LiveConfig.EscalaCanvas(c.gameObject.name) / 100f;
+    }
+
+    private static void Avisar(CanvasScaler c)
+    {
+        int id = c.GetInstanceID();
+        if (avisados.Count > 200 || !avisados.Add(id)) return;
+        LiveLog.Info("UI scale: the game sets the CanvasScaler of '" + c.gameObject.name + "' (" + c.uiScaleMode + ")");
+    }
+
+    // o jogo escreveu scaleFactor: guarda como original e ja grava multiplicado
+    private static void PreFator(CanvasScaler __instance, ref float value)
+    {
+        if (proprio || !__instance) return;
+        try
+        {
+            if (__instance.uiScaleMode != CanvasScaler.ScaleMode.ConstantPixelSize) return;
+            Avisar(__instance);
+            int id = __instance.GetInstanceID();
+            Orig o;
+            if (!canvas.TryGetValue(id, out o)) { o = new Orig(); canvas[id] = o; }
+            o.Valor = value;
+            value = value * Fator(__instance);
+            o.Posto = value;
+        }
+        catch { }
+    }
+
+    // o jogo escreveu referenceResolution: guarda como original e ja grava dividido (referencia menor = maior)
+    private static void PreRef(CanvasScaler __instance, ref Vector2 value)
+    {
+        if (proprio || !__instance) return;
+        try
+        {
+            if (__instance.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize) return;
+            Avisar(__instance);
+            int id = __instance.GetInstanceID();
+            Orig o;
+            if (!canvas.TryGetValue(id, out o)) { o = new Orig(); canvas[id] = o; }
+            o.Valor = value.x; o.Valor2 = value.y;
+            float f = Fator(__instance);
+            value = new Vector2(value.x / f, value.y / f);
+            o.Posto = value.x; o.Posto2 = value.y;
+        }
+        catch { }
+    }
 
     // nomes dos Canvas com CanvasScaler vistos na ultima passada (para a lista da aba Interface)
     public static List<string> Nomes { get { return nomes; } }
@@ -39,12 +174,13 @@ internal static class EscalaUI
         proxima = agora + 2f;
         bool padrao = LiveConfig.EscalaUI == 100 && LiveConfig.EscalaFonte == 100 && !LiveConfig.TemEscalaCanvas();
         if (padrao && !mexendo) { ListarNomes(); return; }
-        try { AplicarCanvas(); }
+        try { proprio = true; AplicarCanvas(); }
         catch (Exception e) { LiveLog.Erro("le_parte", e, "UI scale"); }
+        finally { proprio = false; }
         try { AplicarTextos(); }
         catch (Exception e) { LiveLog.Erro("le_parte", e, "font scale"); }
         mexendo = !padrao;
-        if (padrao) { canvas.Clear(); textos.Clear(); }
+        if (padrao) { canvas.Clear(); textos.Clear(); vigiados.Clear(); escritoCanvas.Clear(); }
     }
 
     private static void ListarNomes()
@@ -62,38 +198,48 @@ internal static class EscalaUI
     private static void AplicarCanvas()
     {
         nomes.Clear();
+        vigiados.Clear();
         UnityEngine.Object[] cs = UnityEngine.Object.FindObjectsOfType(typeof(CanvasScaler));
         for (int i = 0; i < cs.Length; i++)
         {
             CanvasScaler c = cs[i] as CanvasScaler;
             if (!c) continue;
+            if (vigiados.Count < 100) vigiados.Add(c);
             string nome = c.gameObject.name;
             if (nomes.Count < 30 && !nomes.Contains(nome)) nomes.Add(nome);
-            float f = LiveConfig.EscalaUI / 100f * LiveConfig.EscalaCanvas(nome) / 100f;
-            int id = c.GetInstanceID();
-            Orig o;
-            if (c.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize)
-            {
-                // tela de referencia menor = interface maior
-                Vector2 rr = c.referenceResolution;
-                if (!canvas.TryGetValue(id, out o)) { o = new Orig(); o.Valor = rr.x; o.Valor2 = rr.y; o.Posto = -1f; canvas[id] = o; }
-                else if (Math.Abs(rr.x - o.Posto) > 0.5f || Math.Abs(rr.y - o.Posto2) > 0.5f) { o.Valor = rr.x; o.Valor2 = rr.y; }
-                Vector2 novo = new Vector2(o.Valor / f, o.Valor2 / f);
-                if (Math.Abs(novo.x - rr.x) > 0.5f || Math.Abs(novo.y - rr.y) > 0.5f) c.referenceResolution = novo;
-                o.Posto = novo.x; o.Posto2 = novo.y;
-            }
-            else if (c.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize)
-            {
-                float sf = c.scaleFactor;
-                if (!canvas.TryGetValue(id, out o)) { o = new Orig(); o.Valor = sf; o.Posto = -1f; canvas[id] = o; }
-                else if (Math.Abs(sf - o.Posto) > 0.001f) o.Valor = sf;
-                float novo = o.Valor * f;
-                if (Math.Abs(novo - sf) > 0.001f) c.scaleFactor = novo;
-                o.Posto = novo;
-            }
+            AplicarUm(c);
         }
         nomes.Sort(StringComparer.OrdinalIgnoreCase);
         if (canvas.Count > 2000) canvas.Clear();
+    }
+
+    // poe a escala do mod num CanvasScaler; se o jogo trocou o valor, o novo vira o original. true = escreveu algo
+    private static bool AplicarUm(CanvasScaler c)
+    {
+        bool mudou = false;
+        float f = Fator(c);
+        int id = c.GetInstanceID();
+        Orig o;
+        if (c.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize)
+        {
+            // tela de referencia menor = interface maior
+            Vector2 rr = c.referenceResolution;
+            if (!canvas.TryGetValue(id, out o)) { o = new Orig(); o.Valor = rr.x; o.Valor2 = rr.y; o.Posto = -1f; canvas[id] = o; }
+            else if (Math.Abs(rr.x - o.Posto) > 0.5f || Math.Abs(rr.y - o.Posto2) > 0.5f) { o.Valor = rr.x; o.Valor2 = rr.y; }
+            Vector2 novo = new Vector2(o.Valor / f, o.Valor2 / f);
+            if (Math.Abs(novo.x - rr.x) > 0.5f || Math.Abs(novo.y - rr.y) > 0.5f) { c.referenceResolution = novo; mudou = true; }
+            o.Posto = novo.x; o.Posto2 = novo.y;
+        }
+        else if (c.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize)
+        {
+            float sf = c.scaleFactor;
+            if (!canvas.TryGetValue(id, out o)) { o = new Orig(); o.Valor = sf; o.Posto = -1f; canvas[id] = o; }
+            else if (Math.Abs(sf - o.Posto) > 0.001f) o.Valor = sf;
+            float novo = o.Valor * f;
+            if (Math.Abs(novo - sf) > 0.001f) { c.scaleFactor = novo; mudou = true; }
+            o.Posto = novo;
+        }
+        return mudou;
     }
 
     private static void AplicarTextos()
