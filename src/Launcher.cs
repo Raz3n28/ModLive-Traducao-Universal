@@ -53,6 +53,8 @@ internal static class LiveBoot
         {
             LiveLog.Erro("le_criar_tradutor", e);
         }
+        try { LiveImgui.Iniciar(); }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "IMGUI"); }
         LiveLog.Info("lg_pronto");
         LiveLog.Info("==============================================");
     }
