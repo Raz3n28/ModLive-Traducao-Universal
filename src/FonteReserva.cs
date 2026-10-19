@@ -37,6 +37,22 @@ internal static class FonteReserva
         }
     }
 
+    // Chamado pela varredura com a fonte de cada texto: fonte que ainda nao foi vista e ligada na hora,
+    // sem esperar a procura completa (que agora roda so ao carregar cena e a cada 30 s).
+    public static void VerificarFonte(TMP_FontAsset f)
+    {
+        try
+        {
+            if (!f || reservas.Contains(f)) return;
+            if (!vistas.Add(f.GetInstanceID())) return;
+            Corrigir(f);
+        }
+        catch (Exception e)
+        {
+            LiveLog.Erro("le_fontes_reserva", e);
+        }
+    }
+
     private static void Corrigir(TMP_FontAsset f)
     {
         try

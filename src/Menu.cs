@@ -57,6 +57,11 @@ internal static class LiveMenu
     private static string buscaFiltro;
     private static int catFiltro = -1;
 
+    // aba Avancado
+    private static bool confLimpar;         // true = o proximo clique em "Limpar cache" apaga de verdade
+    private static string msgAvanc = "";
+    private static bool msgAvancErro;
+
     public static void Desenhar(MonoBehaviour drv)
     {
         Event ev = Event.current;
@@ -107,6 +112,7 @@ internal static class LiveMenu
     private static void Fechar()
     {
         aberto = false;
+        confLimpar = false;
         termoEdit = null;
         termoCat = null;
         LiveConfig.SalvarSeSujo();
@@ -284,6 +290,8 @@ internal static class LiveMenu
         {
             aba = idx;
             rolagem = Vector2.zero;
+            confLimpar = false;
+            msgAvanc = "";
             pagina = 0;
             termoEdit = null;
             termoCat = null;
@@ -1047,17 +1055,94 @@ internal static class LiveMenu
             LiveConfig.BotaoVisivel = botao;
             LiveConfig.Marcar();
         }
+
+        // contexto para a IA (so vale no modo com chave)
+        bool ctx = Marca(LiveConfig.Contexto, LiveTxt.T("contexto"));
+        if (ctx != LiveConfig.Contexto)
+        {
+            LiveConfig.Contexto = ctx;
+            LiveConfig.Marcar();
+        }
+        GUILayout.Label(LiveTxt.T("contexto_dica"), sPeq);
+        GUILayout.Space(8f);
+
+        // tamanho minimo da fonte quando o texto nao cabe
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_min"), GUILayout.Width(250f));
+        if (GUILayout.Button("-", GUILayout.Width(28f))) MudarFonteMin(-5);
+        GUILayout.Label(LiveConfig.FonteMin + "%", GUILayout.Width(50f));
+        if (GUILayout.Button("+", GUILayout.Width(28f))) MudarFonteMin(5);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.T("fonte_min_dica"), sPeq);
         GUILayout.Space(10f);
 
-        if (GUILayout.Button(LiveTxt.T("limpar_cache"), GUILayout.Height(28f)))
+        // pre-traduzir o que ja esta carregado (menus e janelas escondidos)
+        if (GUILayout.Button(LiveTxt.T("pre_trad"), GUILayout.Height(28f)))
         {
-            TradCache.Limpar();
-            Glossario.LimparNaoTravados();
-            termoEdit = null;
-            LiveMotor.ZerarContadores();
-            Mudou();   // Reiniciar: a tela volta ao original e e traduzida de novo
-            LiveLog.Info("lg_cache_limpo", LiveConfig.Idioma);
+            confLimpar = false;
+            if (!LiveConfig.Ativo)
+            {
+                msgAvanc = LiveTxt.T("pre_pausado");
+                msgAvancErro = true;
+            }
+            else
+            {
+                msgAvanc = LiveTxt.F("pre_ok", LiveDriver.PreTraduzir());
+                msgAvancErro = false;
+            }
         }
+        GUILayout.Label(LiveTxt.T(gratis ? "pre_dica_gratis" : "pre_dica"), sPeq);
+        GUILayout.Space(10f);
+
+        // exportar / importar glossario e cache
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(LiveTxt.T("comp_exportar"), GUILayout.Height(28f)))
+        {
+            confLimpar = false;
+            msgAvanc = Compartilhar.Exportar();
+            msgAvancErro = false;
+        }
+        if (GUILayout.Button(LiveTxt.T("comp_importar"), GUILayout.Height(28f)))
+        {
+            confLimpar = false;
+            msgAvanc = Compartilhar.Importar();
+            msgAvancErro = false;
+        }
+        if (GUILayout.Button(LiveTxt.T("log_pasta"), GUILayout.Height(28f), GUILayout.Width(130f)))
+        {
+            try { Application.OpenURL("file:///" + Compartilhar.Pasta.Replace('\\', '/')); }
+            catch (Exception e) { LiveLog.Erro("le_parte", e, "open folder"); }
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.Label(LiveTxt.F("comp_dica", LiveConfig.Idioma), sPeq);
+        if (msgAvanc.Length > 0) GUILayout.Label(msgAvanc, msgAvancErro ? sErro : sOk);
+        GUILayout.Space(10f);
+
+        // limpar cache: pede um segundo clique (apaga tudo do idioma e nao tem volta)
+        Color corAntes = GUI.backgroundColor;
+        if (confLimpar) GUI.backgroundColor = new Color(1f, 0.45f, 0.4f);
+        if (GUILayout.Button(LiveTxt.T(confLimpar ? "limpar_conf" : "limpar_cache"), GUILayout.Height(28f)))
+        {
+            if (!confLimpar)
+            {
+                confLimpar = true;
+            }
+            else
+            {
+                confLimpar = false;
+                TradCache.Limpar();
+                Glossario.LimparNaoTravados();
+                termoEdit = null;
+                LiveMotor.ZerarContadores();
+                Mudou();   // Reiniciar: a tela volta ao original e e traduzida de novo
+                LiveLog.Info("lg_cache_limpo", LiveConfig.Idioma);
+                msgAvanc = LiveTxt.T("limpar_feito");
+                msgAvancErro = false;
+            }
+        }
+        GUI.backgroundColor = corAntes;
+        if (confLimpar) GUILayout.Label(LiveTxt.F("limpar_aviso", TradCache.Total), sErro);
         GUILayout.Space(10f);
         GUILayout.Label(LiveTxt.T("aviso_teclas"), sPeq);
     }
@@ -1100,6 +1185,12 @@ internal static class LiveMenu
         int ate = Mathf.Max(0, total - 150);
         for (int i = total - 1; i >= ate; i--)
             GUILayout.Label(LiveLog.Texto(i), LiveLog.Ruim(i) ? sErro : sPeq);
+    }
+
+    private static void MudarFonteMin(int delta)
+    {
+        LiveConfig.FonteMin = Mathf.Clamp(LiveConfig.FonteMin + delta, 50, 90);
+        LiveConfig.Marcar();
     }
 
     private static void MudarRpm(int delta, int maxRpm)

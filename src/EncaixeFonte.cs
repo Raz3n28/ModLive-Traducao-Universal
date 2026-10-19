@@ -9,8 +9,8 @@ using UnityEngine.UI;
 // Resolve palavras quebradas ("Gover nante") e textos cortados ("···").
 internal static class EncaixeFonte
 {
-    // tamanho minimo = 65% do original (e nunca menor que 10)
-    private const float Fator = 0.65f;
+    // tamanho minimo = LiveConfig.FonteMin % do original (padrao 65%, ajustavel na aba Avancado; nunca menor que 10)
+    private static float Fator { get { return Mathf.Clamp(LiveConfig.FonteMin, 50, 90) / 100f; } }
     private const float MinimoAbsoluto = 10f;
 
     private static readonly Dictionary<int, string> verificadosTmp = new Dictionary<int, string>();

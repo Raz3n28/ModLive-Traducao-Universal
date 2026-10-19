@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // Fica de olho em todo texto que aparece na tela, troca pela traducao (se ja existe) ou pede ao motor.
@@ -13,11 +14,17 @@ internal class LiveDriver : MonoBehaviour
     // textos ja traduzidos: se o jogo reescrever o original, troca no mesmo quadro (sem piscar)
     private readonly List<TMP_Text> vigiados = new List<TMP_Text>();
     private readonly HashSet<int> idsVigiados = new HashSet<int>();
+    // o mesmo para os textos do Unity antigo (UI.Text), que nao avisam quando mudam
+    private readonly List<Text> vigiadosUi = new List<Text>();
+    private readonly HashSet<int> idsVigiadosUi = new HashSet<int>();
+    private const int MaxVigiados = 400;
     private readonly HashSet<int> naFila = new HashSet<int>();
     private Action<UnityEngine.Object> aoMudar;
     private float proximaVarredura;
     private float ultimaVarreduraRapida;
     private float proximoSalvar;
+    private float proximaFonte;
+    private bool cenaNova;
 
     private void Start()
     {
@@ -32,11 +39,19 @@ internal class LiveDriver : MonoBehaviour
             LiveLog.Erro("le_tmp_evento", e);
         }
         proximaVarredura = Time.unscaledTime + 1f;
+        try { SceneManager.sceneLoaded += AoCarregarCena; }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "scene event"); }
+    }
+
+    private void AoCarregarCena(Scene cena, LoadSceneMode modo)
+    {
+        cenaNova = true;
     }
 
     private void OnDestroy()
     {
         try { if (aoMudar != null) TMPro_EventManager.TEXT_CHANGED_EVENT.Remove(aoMudar); } catch { }
+        try { SceneManager.sceneLoaded -= AoCarregarCena; } catch { }
         try { TradCache.Flush(); LiveConfig.SalvarSeSujo(); Glossario.SalvarSeSujo(); } catch { }
     }
 
@@ -91,7 +106,9 @@ internal class LiveDriver : MonoBehaviour
             for (int i = 0; i < fila.Count; i++)
             {
                 TMP_Text t = fila[i];
-                if (t && !Aplicar(t)) EncaixeFonte.Verificar(t);
+                if (!t) continue;
+                FonteReserva.VerificarFonte(t.font);
+                if (!Aplicar(t)) EncaixeFonte.Verificar(t);
             }
             fila.Clear();
             naFila.Clear();
@@ -103,8 +120,70 @@ internal class LiveDriver : MonoBehaviour
             proximaVarredura = agora + 3f;
             if (rapida) { LiveMotor.VarrerAgora = false; ultimaVarreduraRapida = agora; }
             Varrer();
+        }
+
+        // Procurar fontes em TODOS os objetos carregados e caro: so quando uma cena carrega e, por garantia,
+        // a cada 30 s. Fonte nova que aparece num texto e ligada na hora pela varredura (FonteReserva.VerificarFonte).
+        if (cenaNova || agora >= proximaFonte)
+        {
+            cenaNova = false;
+            proximaFonte = agora + 30f;
             FonteReserva.Verificar();
         }
+    }
+
+    // Lista de vigiados cheia: tira so o mais antigo (antes apagava tudo e os textos piscavam o original).
+    private void VigiarTmp(TMP_Text t)
+    {
+        if (!idsVigiados.Add(t.GetInstanceID())) return;
+        if (vigiados.Count >= MaxVigiados)
+        {
+            idsVigiados.Remove(vigiados[0].GetInstanceID());
+            vigiados.RemoveAt(0);
+        }
+        vigiados.Add(t);
+    }
+
+    private void VigiarUi(Text t)
+    {
+        if (!idsVigiadosUi.Add(t.GetInstanceID())) return;
+        if (vigiadosUi.Count >= MaxVigiados)
+        {
+            idsVigiadosUi.Remove(vigiadosUi[0].GetInstanceID());
+            vigiadosUi.RemoveAt(0);
+        }
+        vigiadosUi.Add(t);
+    }
+
+    // Botao "Pre-traduzir" (aba Avancado): poe na fila o texto de tudo que ja esta carregado na memoria,
+    // inclusive janelas e menus escondidos. Nao troca nada na tela: quando o texto aparecer, ja vem do cache.
+    public static int PreTraduzir()
+    {
+        int n = 0;
+        int antes = LiveMotor.NaFila;
+        try
+        {
+            UnityEngine.Object[] tmps = Resources.FindObjectsOfTypeAll(typeof(TMP_Text));
+            for (int i = 0; i < tmps.Length; i++)
+            {
+                TMP_Text t = tmps[i] as TMP_Text;
+                if (!t) continue;
+                string s = t.text;
+                if (!string.IsNullOrEmpty(s)) { LiveMotor.Traduzir(s, t); n++; }
+            }
+            UnityEngine.Object[] txts = Resources.FindObjectsOfTypeAll(typeof(Text));
+            for (int i = 0; i < txts.Length; i++)
+            {
+                Text t = txts[i] as Text;
+                if (!t) continue;
+                string s = t.text;
+                if (!string.IsNullOrEmpty(s)) { LiveMotor.Traduzir(s, t); n++; }
+            }
+        }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "pre-translate"); }
+        int novos = Mathf.Max(0, LiveMotor.NaFila - antes);
+        LiveLog.Info("lg_pretrad", n, novos);
+        return novos;
     }
 
     // Retorna true se trocou o texto (ai o ajuste de fonte espera o proximo aviso de mudanca).
@@ -117,11 +196,7 @@ internal class LiveDriver : MonoBehaviour
             if (r != null && r != s)
             {
                 t.text = r;
-                if (idsVigiados.Add(t.GetInstanceID()))
-                {
-                    if (vigiados.Count >= 400) { vigiados.Clear(); idsVigiados.Clear(); idsVigiados.Add(t.GetInstanceID()); }
-                    vigiados.Add(t);
-                }
+                VigiarTmp(t);
                 return true;
             }
         }
@@ -139,7 +214,27 @@ internal class LiveDriver : MonoBehaviour
             TMP_Text t = vigiados[i];
             if (!t)
             {
+                idsVigiados.Remove(t.GetInstanceID());
                 vigiados.RemoveAt(i);
+                continue;
+            }
+            if (!t.isActiveAndEnabled) continue;
+            try
+            {
+                string s = t.text;
+                if (LiveMotor.Nossa(s)) continue;
+                string r = LiveMotor.Traduzir(s, t);
+                if (r != null && r != s) t.text = r;
+            }
+            catch { }
+        }
+        for (int i = vigiadosUi.Count - 1; i >= 0; i--)
+        {
+            Text t = vigiadosUi[i];
+            if (!t)
+            {
+                idsVigiadosUi.Remove(t.GetInstanceID());
+                vigiadosUi.RemoveAt(i);
                 continue;
             }
             if (!t.isActiveAndEnabled) continue;
@@ -162,6 +257,17 @@ internal class LiveDriver : MonoBehaviour
         for (int i = vigiados.Count - 1; i >= 0; i--)
         {
             TMP_Text t = vigiados[i];
+            if (!t) continue;
+            try
+            {
+                string o = LiveMotor.Original(t.text);
+                if (o != null) { t.text = o; n++; }
+            }
+            catch { }
+        }
+        for (int i = vigiadosUi.Count - 1; i >= 0; i--)
+        {
+            Text t = vigiadosUi[i];
             if (!t) continue;
             try
             {
@@ -197,6 +303,8 @@ internal class LiveDriver : MonoBehaviour
 
         vigiados.Clear();
         idsVigiados.Clear();
+        vigiadosUi.Clear();
+        idsVigiadosUi.Clear();
         fila.Clear();
         naFila.Clear();
         LiveMotor.FimRestaurar();
@@ -210,6 +318,18 @@ internal class LiveDriver : MonoBehaviour
         for (int i = vigiados.Count - 1; i >= 0; i--)
         {
             TMP_Text t = vigiados[i];
+            if (!t) continue;
+            try
+            {
+                string s = t.text;
+                string r = LiveMotor.Retraduzir(s);
+                if (r != null && r != s) { t.text = r; n++; }
+            }
+            catch { }
+        }
+        for (int i = vigiadosUi.Count - 1; i >= 0; i--)
+        {
+            Text t = vigiadosUi[i];
             if (!t) continue;
             try
             {
@@ -257,7 +377,9 @@ internal class LiveDriver : MonoBehaviour
             for (int i = 0; i < tmps.Length; i++)
             {
                 TMP_Text t = tmps[i] as TMP_Text;
-                if (t && !Aplicar(t)) EncaixeFonte.Verificar(t);
+                if (!t) continue;
+                FonteReserva.VerificarFonte(t.font);
+                if (!Aplicar(t)) EncaixeFonte.Verificar(t);
             }
         }
         catch (Exception e)
@@ -274,7 +396,11 @@ internal class LiveDriver : MonoBehaviour
                 if (!t) continue;
                 string s = t.text;
                 string r = LiveMotor.Traduzir(s, t);
-                if (r != null && r != s) t.text = r;
+                if (r != null && r != s)
+                {
+                    t.text = r;
+                    VigiarUi(t);
+                }
                 else EncaixeFonte.Verificar(t);
             }
         }

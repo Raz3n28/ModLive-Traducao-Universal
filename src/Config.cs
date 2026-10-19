@@ -28,15 +28,15 @@ internal static class LiveConfig
     {
         new Provedor("google", "Google Tradutor (gratis)", 0, "", "", false,
             "Gratis e sem chave. Qualidade media. Endpoint nao oficial: pode ficar lento ou parar."),
-        new Provedor("gemini", "Google Gemini", 1, "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-flash", true,
+        new Provedor("gemini", "Google Gemini", 1, "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-3.6-flash", true,
             "Chave GRATIS em aistudio.google.com (tem limite por minuto e por dia)."),
-        new Provedor("deepseek", "DeepSeek", 1, "https://api.deepseek.com", "deepseek-chat", true,
+        new Provedor("deepseek", "DeepSeek", 1, "https://api.deepseek.com", "deepseek-flash", true,
             "Barato e bom para traducao. Chave em platform.deepseek.com."),
-        new Provedor("groq", "Groq", 1, "https://api.groq.com/openai/v1", "llama-3.3-70b-versatile", true,
+        new Provedor("groq", "Groq", 1, "https://api.groq.com/openai/v1", "openai/gpt-oss-120b", true,
             "Tem plano gratis (console.groq.com). Muito rapido."),
-        new Provedor("openrouter", "OpenRouter", 1, "https://openrouter.ai/api/v1", "deepseek/deepseek-chat", true,
+        new Provedor("openrouter", "OpenRouter", 1, "https://openrouter.ai/api/v1", "deepseek/deepseek-v4-flash", true,
             "Um site, varios modelos. Existem modelos gratis (nome termina em :free). Troque o campo Modelo."),
-        new Provedor("openai", "OpenAI", 1, "https://api.openai.com/v1", "gpt-4o-mini", true,
+        new Provedor("openai", "OpenAI", 1, "https://api.openai.com/v1", "gpt-5-mini", true,
             "Chave em platform.openai.com (pago)."),
         new Provedor("claude", "Claude (Anthropic)", 2, "https://api.anthropic.com/v1/messages", "claude-haiku-5-5", true,
             "Chave em console.anthropic.com (pago)."),
@@ -91,6 +91,9 @@ internal static class LiveConfig
     public static int Rpm = 60;         // pedidos por minuto
     public static int Lote = 8;         // textos por pedido (so IA)
     public static bool BotaoVisivel = true;
+    public static bool Contexto = true;     // manda as ultimas frases como contexto para a IA (so modo com chave)
+    // tamanho minimo da fonte quando o texto nao cabe, em % do original (EncaixeFonte)
+    public static int FonteMin = 65;
 
     public static readonly Dictionary<string, string> Chaves = new Dictionary<string, string>();
     public static readonly Dictionary<string, string> Urls = new Dictionary<string, string>();
@@ -181,6 +184,8 @@ internal static class LiveConfig
             else if (k == "rpm") { if (int.TryParse(v, out n)) Rpm = Mathf.Clamp(n, 1, 600); }
             else if (k == "lote") { if (int.TryParse(v, out n)) Lote = Mathf.Clamp(n, 1, 30); }
             else if (k == "botao") BotaoVisivel = v != "0";
+            else if (k == "contexto") Contexto = v != "0";
+            else if (k == "fonte_min") { if (int.TryParse(v, out n)) FonteMin = Mathf.Clamp(n, 50, 90); }
             else if (k == "menu_idioma") { if (int.TryParse(v, out n)) LiveTxt.Atual = n; }
             else if (k == "estilo") { if (int.TryParse(v, out n)) Estilo = Mathf.Clamp(n, 0, Estilos.Length - 1); }
             else if (k == "prompt") PromptExtra = v.Replace("\\n", "\n");
@@ -205,6 +210,8 @@ internal static class LiveConfig
             sb.AppendLine("rpm=" + Rpm);
             sb.AppendLine("lote=" + Lote);
             sb.AppendLine("botao=" + (BotaoVisivel ? "1" : "0"));
+            sb.AppendLine("contexto=" + (Contexto ? "1" : "0"));
+            sb.AppendLine("fonte_min=" + FonteMin);
             sb.AppendLine("menu_idioma=" + LiveTxt.Atual);
             sb.AppendLine("estilo=" + Estilo);
             sb.AppendLine("prompt=" + (PromptExtra ?? "").Replace("\r", "").Replace("\n", "\\n"));

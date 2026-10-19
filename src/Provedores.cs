@@ -261,8 +261,9 @@ internal static class Provedores
         string url = LiveConfig.Url(p.Id).Trim().TrimEnd('/');
         if (!url.EndsWith("/chat/completions")) url += "/chat/completions";
 
-        string json = "{\"model\":" + Json.Esc(LiveConfig.Modelo(p.Id).Trim()) + ",\"temperature\":0.2,\"messages\":["
-            + "{\"role\":\"system\",\"content\":" + Json.Esc(PromptSistema()) + "},"
+        string modelo = LiveConfig.Modelo(p.Id).Trim();
+        string json = "{\"model\":" + Json.Esc(modelo) + (AceitaTemperatura(modelo) ? ",\"temperature\":0.2" : "") + ",\"messages\":["
+            + "{\"role\":\"system\",\"content\":" + Json.Esc(PromptSistema(textos)) + "},"
             + "{\"role\":\"user\",\"content\":" + Json.Esc(Json.ListaTextos(textos)) + "}]}";
         UnityWebRequest r = Post(url, json);
         string chave = LiveConfig.Chave(p.Id).Trim();
@@ -270,18 +271,39 @@ internal static class Provedores
         return r;
     }
 
+    // Modelos "que pensam" da OpenAI (gpt-5..., o1, o3, o4...) so aceitam a temperatura padrao:
+    // mandar 0.2 da erro 400. Para eles o campo nao vai no pedido.
+    private static bool AceitaTemperatura(string modelo)
+    {
+        string m = (modelo ?? "").ToLowerInvariant();
+        int barra = m.LastIndexOf('/');
+        if (barra >= 0) m = m.Substring(barra + 1);   // ex.: "openai/gpt-5-mini" no OpenRouter
+        if (m.StartsWith("gpt-5", StringComparison.Ordinal)) return false;
+        if (m.Length >= 2 && m[0] == 'o' && char.IsDigit(m[1])) return false;
+        return true;
+    }
+
     // ---------------- Claude (Anthropic) ----------------
 
     private static UnityWebRequest MontarClaude(Provedor p, List<string> textos)
     {
         string url = LiveConfig.Url(p.Id).Trim();
-        string json = "{\"model\":" + Json.Esc(LiveConfig.Modelo(p.Id).Trim()) + ",\"max_tokens\":4096,\"temperature\":0.2,"
-            + "\"system\":" + Json.Esc(PromptSistema()) + ",\"messages\":["
+        string json = "{\"model\":" + Json.Esc(LiveConfig.Modelo(p.Id).Trim()) + ",\"max_tokens\":" + MaxTokens(textos) + ",\"temperature\":0.2,"
+            + "\"system\":" + Json.Esc(PromptSistema(textos)) + ",\"messages\":["
             + "{\"role\":\"user\",\"content\":" + Json.Esc(Json.ListaTextos(textos)) + "}]}";
         UnityWebRequest r = Post(url, json);
         r.SetRequestHeader("x-api-key", LiveConfig.Chave(p.Id).Trim());
         r.SetRequestHeader("anthropic-version", "2023-06-01");
         return r;
+    }
+
+    // Limite de resposta pelo tamanho do lote: folga para idiomas que gastam mais tokens,
+    // sem pedir demais num lote pequeno. Resposta cortada no meio faz o lote inteiro falhar.
+    private static int MaxTokens(List<string> textos)
+    {
+        int chars = 0;
+        for (int i = 0; i < textos.Count; i++) chars += textos[i].Length;
+        return Mathf.Clamp(1024 + chars * 3, 1024, 8192);
     }
 
     // ---------------- comum ----------------
@@ -296,8 +318,9 @@ internal static class Provedores
         return r;
     }
 
-    // Regras fixas (garantem o formato da resposta) + estilo escolhido pelo jogador.
-    public static string PromptSistema()
+    // Regras fixas (garantem o formato da resposta) + estilo escolhido pelo jogador
+    // + termos do glossario que aparecem nos textos + textos recentes como contexto.
+    public static string PromptSistema(List<string> textos)
     {
         StringBuilder sb = new StringBuilder();
         sb.Append("You are a professional game localizer. You translate UI text, item names, quests and dialogue of a sci-fi space station and fleet management game called 'Outer Space'. ");
@@ -316,7 +339,30 @@ internal static class Provedores
             sb.Append("\nExtra instructions from the player (follow them, but the hard rules above always win): ").Append(extra.Trim());
         string cats = Categorias.TextoPrompt();
         if (cats.Length > 0) sb.Append("\n").Append(cats);
+
+        // glossario: o mesmo nome traduzido do mesmo jeito tambem dentro de frases
+        List<TermoGlossario> termos = Glossario.TermosEm(textos, 40, 1500);
+        if (termos.Count > 0)
+        {
+            sb.Append("\nGlossary: when one of these terms appears inside a string, translate it exactly like this:");
+            for (int i = 0; i < termos.Count; i++)
+                sb.Append("\n- ").Append(UmaLinha(termos[i].Original)).Append(" => ").Append(UmaLinha(termos[i].Traducao));
+        }
+
+        // contexto: o que apareceu na tela pouco antes (ajuda em dialogos: genero, tratamento, assunto)
+        List<string[]> recentes = LiveMotor.Recentes(textos);
+        if (recentes.Count > 0)
+        {
+            sb.Append("\nRecent text shown in the game just before, with its translation. Context only: do NOT translate it again and do NOT include it in your reply:");
+            for (int i = 0; i < recentes.Count; i++)
+                sb.Append("\n- ").Append(UmaLinha(recentes[i][0])).Append(" => ").Append(UmaLinha(recentes[i][1]));
+        }
         return sb.ToString();
+    }
+
+    private static string UmaLinha(string s)
+    {
+        return (s ?? "").Replace("\r", " ").Replace("\n", " ");
     }
 
     // Tira cercas de codigo (```json) e le o primeiro array JSON de strings.

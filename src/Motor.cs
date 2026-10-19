@@ -29,6 +29,9 @@ internal static class LiveMotor
     private static readonly Dictionary<string, string> pistas = new Dictionary<string, string>();
     // traducao antiga -> traducao nova (quando o jogador edita um termo no glossario, o texto na tela troca na hora)
     private static readonly Dictionary<string, string> substituicoes = new Dictionary<string, string>();
+    // ultimas frases traduzidas (original, traducao): vao como contexto no pedido para a IA
+    private static readonly List<string[]> recentes = new List<string[]>();
+    private const int MaxRecentes = 3;
 
     private const int MaxEmVoo = 3;
     // Google gratis (endpoint nao oficial): pouco pedido por vez e ritmo baixo, senao responde 429
@@ -159,6 +162,7 @@ internal static class LiveMotor
         tentativas.Clear();
         pistas.Clear();
         substituicoes.Clear();
+        recentes.Clear();
         fila.Clear();
         naFila.Clear();
         retraduzindo.Clear();
@@ -178,6 +182,27 @@ internal static class LiveMotor
         falhou.Clear();
         tentativas.Clear();
         UltimoErro = "";
+    }
+
+    // Frases recentes para o contexto da IA (sem as que estao no proprio lote). Vazio se o jogador desligou.
+    public static List<string[]> Recentes(List<string> lote)
+    {
+        List<string[]> r = new List<string[]>();
+        if (!LiveConfig.Contexto) return r;
+        for (int i = 0; i < recentes.Count; i++)
+            if (lote == null || !lote.Contains(recentes[i][0])) r.Add(recentes[i]);
+        return r;
+    }
+
+    // so frases (nao termos curtos), e nao muito longas, para nao gastar token a toa
+    private static void LembrarRecente(string original, string traducao)
+    {
+        if (string.IsNullOrEmpty(traducao) || original.Length < 12 || original.Length > 300) return;
+        if (Glossario.Termo(original)) return;
+        for (int i = recentes.Count - 1; i >= 0; i--)
+            if (recentes[i][0] == original) recentes.RemoveAt(i);
+        recentes.Add(new string[] { original, traducao });
+        while (recentes.Count > MaxRecentes) recentes.RemoveAt(0);
     }
 
     // ---------------- o que traduzir ----------------
@@ -450,6 +475,17 @@ internal static class LiveMotor
     private static readonly float[] epCastigoAte = new float[Provedores.GoogleEndpoints];
     private static readonly int[] ep429 = new int[Provedores.GoogleEndpoints];
     private static readonly int[] epFormato = new int[Provedores.GoogleEndpoints];
+    // falhas seguidas de cada endereco (qualquer motivo). Muitas seguidas = o Google pode ter mudado o endereco.
+    private static readonly int[] epFalhas = new int[Provedores.GoogleEndpoints];
+    private const int AvisoFalhas = 5;
+
+    private static void FalhouEndereco(int ep)
+    {
+        if (ep < 0 || ep >= epFalhas.Length) return;
+        epFalhas[ep]++;
+        // avisa uma vez por sequencia (os castigos continuam sendo logados normalmente)
+        if (epFalhas[ep] == AvisoFalhas) LiveLog.Aviso("lg_ep_quebrado", Provedores.NomeGoogle(ep), AvisoFalhas);
+    }
 
     // segundos que faltam para o endereco sair do castigo (0 = livre). Usado na aba Log.
     public static int CastigoRestante(int ep)
@@ -567,6 +603,7 @@ internal static class LiveMotor
                         pistas.TryGetValue(lote[i], out pista);
                         pistas.Remove(lote[i]);
                         Glossario.Auto(lote[i], trad[i], pista);
+                        LembrarRecente(lote[i], trad[i]);
                         Traduzidos++;
                     }
                     naFila.Remove(lote[i]);
@@ -581,7 +618,7 @@ internal static class LiveMotor
                     LiveLog.Info("lg_retraduzidos", reFeitos, Provedores.NomeGoogle(ep), TradCache.TotalProvisorios);
                 }
                 backoff = 0;
-                if (google) { ep429[ep] = 0; epFormato[ep] = 0; }
+                if (google) { ep429[ep] = 0; epFormato[ep] = 0; epFalhas[ep] = 0; }
                 UltimoErro = "";
                 VarrerAgora = true;
                 return;
@@ -591,6 +628,7 @@ internal static class LiveMotor
             ErroChave("e_formato");
             if (google)
             {
+                if (lote.Count == 1) FalhouEndereco(ep);
                 // lote que falhou: separa sem gastar tentativa. Texto sozinho que falhou: conta tentativa
                 // e, se o endereco falhar 3 vezes seguidas assim, ele fica 30 min parado.
                 if (lote.Count == 1 && ++epFormato[ep] >= 3)
@@ -633,6 +671,7 @@ internal static class LiveMotor
                 if (retryAfter > castigo) castigo = retryAfter;
             }
             else castigo = 60f;
+            FalhouEndereco(ep);
             Castigar(ep, castigo, codigo == 0 ? LiveLog.T("lg_m_rede", string.IsNullOrEmpty(erro) ? "" : " (" + erro + ")") : LiveLog.T("lg_m_codigo", codigo));
             pausaAte = agora + 1f;
             for (int i = lote.Count - 1; i >= 0; i--) Devolver(lote[i], false, false);

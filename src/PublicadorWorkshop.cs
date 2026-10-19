@@ -472,7 +472,7 @@ internal static class PublicadorWorkshop
             if (File.Exists(arq)) return File.ReadAllText(arq);
         }
         catch { }
-        return "Universal Translator: translates the game in real time into 20 languages. Free mode or your own AI key.";
+        return "Universal Translator: translates the game in real time into 18 languages. Free mode or your own AI key.";
     }
 
     private static string IdPath()
