@@ -80,7 +80,9 @@ LISTA DE DEFEITOS (rodada nova)
     a cada letra digitada, sem nenhum aviso). Pedido:
     - botao "Enviar / Testar instrucoes" embaixo da caixa;
     - ao clicar, o mod manda um texto de teste para a IA com o estilo + instrucoes atuais e mostra uma
-      "telinha" (quadro dentro do cartao) com: "Instrucoes recebidas" + Original + Traducao;
+      "telinha" (quadro dentro do cartao) com: "Instrucoes recebidas" + 3 quadros:
+      Original (texto de teste), Sem instrucoes (so o estilo) e Com instrucoes (estilo + instrucoes extras).
+      Sao 2 pedidos para a IA (decidido pelo usuario);
     - assim o jogador ve na hora se a traducao mudou do jeito que pediu.
     Texto de teste (ingles, ~290 caracteres, com palavras que a IA costuma traduzir "dificil"):
       "Commander, the station's lexicon database is offline. Acquire three energy cells from the derelict
