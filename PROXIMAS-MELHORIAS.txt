@@ -118,6 +118,15 @@ LISTA DE DEFEITOS (rodada nova)
     Aproveitar: Japanese, Korean e Chinese (simpl.) estao escritos em ingles na lista (provavelmente porque a
     fonte do menu nao tem essas letras); manter, mas conferir.
 
+[ ] 4. Mudar as opcoes "Mandar as ultimas frases como contexto" e "IA pensa antes de traduzir" da aba Avancado
+    (cartao "Opcoes") para a aba Estilo, porque mexem no resultado da traducao.
+    Onde: src\Menu.cs, PaginaAvancado (cartao av_opcoes, as 2 Marca de LiveConfig.Contexto e
+    LiveConfig.Raciocinio) -> PaginaEstilo, num cartao proprio (ex.: "Como a IA traduz") entre o estilo e as
+    instrucoes extras. Na aba Estilo elas ja somem no modo Google (a aba so mostra o aviso), entao a frase
+    "So no modo com chave" pode sair. "Fonte minima" e o resto continuam no Avancado.
+    Os 2 testes do item 2 devem usar essas opcoes tambem (mesma configuracao do jogador).
+    Detalhe visto no print: o texto do 1o interruptor comeca um pouco mais a direita que o do 2o; alinhar.
+
 Notas do que foi feito na ultima rodada:
   - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).
   - Aba Interface: tecla de voltar ao padrao comeca sem tecla (escolha em Avancado > Teclas ou na propria aba).
