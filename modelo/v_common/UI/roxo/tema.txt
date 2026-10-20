@@ -1,0 +1,19 @@
+# gerado por ferramentas/gerar_ui.py
+nome=Roxo Neon
+fundo=#120f1c
+lateral=#0d0b15
+card=#1a1628
+borda=#2c2542
+borda_hover=#3d3460
+texto=#ece9f7
+mudo=#9c95b8
+destaque=#a78bfa
+destaque_texto=#1a0b3d
+nav_ativo=#241c3d
+sec=#f472b6
+sec_texto=#3b0a24
+ok=#86efac
+aviso=#fcd34d
+erro=#fca5a5
+campo=#0d0b15
+claro=0

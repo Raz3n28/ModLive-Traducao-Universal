@@ -1,0 +1,19 @@
+# gerado por ferramentas/gerar_ui.py
+nome=Claro
+fundo=#f5f6fa
+lateral=#ffffff
+card=#ffffff
+borda=#dfe2ec
+borda_hover=#c5cad8
+texto=#1d2130
+mudo=#646a7e
+destaque=#6d5dfc
+destaque_texto=#ffffff
+nav_ativo=#ece9ff
+sec=#f59e0b
+sec_texto=#231500
+ok=#15803d
+aviso=#b45309
+erro=#dc2626
+campo=#ffffff
+claro=1

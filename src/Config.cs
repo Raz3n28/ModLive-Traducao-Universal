@@ -64,10 +64,157 @@ internal static class LiveConfig
         new string[] { "vi", "Tiếng Việt", "Vietnamese" },
         new string[] { "cs", "Čeština", "Czech" },
         new string[] { "ro", "Română", "Romanian" },
+        new string[] { "pt-PT", "Português (PT)", "European Portuguese" },
+        new string[] { "sv", "Svenska", "Swedish" },
+        new string[] { "da", "Dansk", "Danish" },
+        new string[] { "no", "Norsk", "Norwegian" },
+        new string[] { "fi", "Suomi", "Finnish" },
+        new string[] { "hu", "Magyar", "Hungarian" },
+        new string[] { "el", "Ελληνικά", "Greek" },
+        new string[] { "bg", "Български", "Bulgarian" },
+        new string[] { "sk", "Slovenčina", "Slovak" },
+        new string[] { "hr", "Hrvatski", "Croatian" },
+        new string[] { "ms", "Melayu", "Malay" },
+        new string[] { "tl", "Filipino", "Filipino" },
         new string[] { "ja", "Japanese", "Japanese" },
         new string[] { "ko", "Korean", "Korean" },
         new string[] { "zh-CN", "Chinese (simpl.)", "Simplified Chinese" }
     };
+
+    // Botao "Outro..." da aba Geral: os outros idiomas que o Google Tradutor aceita (codigo, nome mostrado, nome em
+    // ingles para a IA). Nome mostrado no proprio idioma quando a fonte do menu tem as letras (latim, cirilico);
+    // nos outros alfabetos fica em ingles, como Japanese/Korean acima.
+    public static readonly string[][] IdiomasOutros = new string[][]
+    {
+        new string[] { "af", "Afrikaans", "Afrikaans" },
+        new string[] { "sq", "Shqip", "Albanian" },
+        new string[] { "am", "Amharic", "Amharic" },
+        new string[] { "ar", "Arabic", "Arabic" },
+        new string[] { "hy", "Armenian", "Armenian" },
+        new string[] { "as", "Assamese", "Assamese" },
+        new string[] { "ay", "Aymar aru", "Aymara" },
+        new string[] { "az", "Azərbaycan", "Azerbaijani" },
+        new string[] { "bm", "Bamanankan", "Bambara" },
+        new string[] { "eu", "Euskara", "Basque" },
+        new string[] { "be", "Беларуская", "Belarusian" },
+        new string[] { "bn", "Bengali", "Bengali" },
+        new string[] { "bs", "Bosanski", "Bosnian" },
+        new string[] { "ca", "Català", "Catalan" },
+        new string[] { "ceb", "Cebuano", "Cebuano" },
+        new string[] { "ny", "Chichewa", "Chichewa" },
+        new string[] { "zh-TW", "Chinese (trad.)", "Traditional Chinese" },
+        new string[] { "co", "Corsu", "Corsican" },
+        new string[] { "dv", "Dhivehi", "Dhivehi" },
+        new string[] { "eo", "Esperanto", "Esperanto" },
+        new string[] { "et", "Eesti", "Estonian" },
+        new string[] { "ee", "Eʋegbe", "Ewe" },
+        new string[] { "fy", "Frysk", "Frisian" },
+        new string[] { "gl", "Galego", "Galician" },
+        new string[] { "ka", "Georgian", "Georgian" },
+        new string[] { "gn", "Avañe'ẽ", "Guarani" },
+        new string[] { "gu", "Gujarati", "Gujarati" },
+        new string[] { "ht", "Kreyòl ayisyen", "Haitian Creole" },
+        new string[] { "ha", "Hausa", "Hausa" },
+        new string[] { "haw", "ʻŌlelo Hawaiʻi", "Hawaiian" },
+        new string[] { "iw", "Hebrew", "Hebrew" },
+        new string[] { "hi", "Hindi", "Hindi" },
+        new string[] { "hmn", "Hmong", "Hmong" },
+        new string[] { "is", "Íslenska", "Icelandic" },
+        new string[] { "ig", "Igbo", "Igbo" },
+        new string[] { "ilo", "Ilokano", "Ilocano" },
+        new string[] { "ga", "Gaeilge", "Irish" },
+        new string[] { "jw", "Basa Jawa", "Javanese" },
+        new string[] { "kn", "Kannada", "Kannada" },
+        new string[] { "kk", "Қазақ", "Kazakh" },
+        new string[] { "km", "Khmer", "Khmer" },
+        new string[] { "rw", "Kinyarwanda", "Kinyarwanda" },
+        new string[] { "ku", "Kurdî", "Kurdish (Kurmanji)" },
+        new string[] { "ckb", "Kurdish (Sorani)", "Kurdish (Sorani)" },
+        new string[] { "ky", "Кыргызча", "Kyrgyz" },
+        new string[] { "lo", "Lao", "Lao" },
+        new string[] { "la", "Latina", "Latin" },
+        new string[] { "lv", "Latviešu", "Latvian" },
+        new string[] { "ln", "Lingála", "Lingala" },
+        new string[] { "lt", "Lietuvių", "Lithuanian" },
+        new string[] { "lg", "Luganda", "Luganda" },
+        new string[] { "lb", "Lëtzebuergesch", "Luxembourgish" },
+        new string[] { "mk", "Македонски", "Macedonian" },
+        new string[] { "mg", "Malagasy", "Malagasy" },
+        new string[] { "ml", "Malayalam", "Malayalam" },
+        new string[] { "mt", "Malti", "Maltese" },
+        new string[] { "mi", "Māori", "Maori" },
+        new string[] { "mr", "Marathi", "Marathi" },
+        new string[] { "mn", "Монгол", "Mongolian" },
+        new string[] { "my", "Burmese", "Myanmar (Burmese)" },
+        new string[] { "ne", "Nepali", "Nepali" },
+        new string[] { "or", "Odia", "Odia (Oriya)" },
+        new string[] { "om", "Oromoo", "Oromo" },
+        new string[] { "ps", "Pashto", "Pashto" },
+        new string[] { "fa", "Persian", "Persian" },
+        new string[] { "pa", "Punjabi", "Punjabi" },
+        new string[] { "qu", "Runasimi", "Quechua" },
+        new string[] { "sm", "Gagana Samoa", "Samoan" },
+        new string[] { "sa", "Sanskrit", "Sanskrit" },
+        new string[] { "gd", "Gàidhlig", "Scots Gaelic" },
+        new string[] { "sr", "Српски", "Serbian" },
+        new string[] { "st", "Sesotho", "Sesotho" },
+        new string[] { "sn", "chiShona", "Shona" },
+        new string[] { "sd", "Sindhi", "Sindhi" },
+        new string[] { "si", "Sinhala", "Sinhala" },
+        new string[] { "sl", "Slovenščina", "Slovenian" },
+        new string[] { "so", "Soomaali", "Somali" },
+        new string[] { "su", "Basa Sunda", "Sundanese" },
+        new string[] { "sw", "Kiswahili", "Swahili" },
+        new string[] { "tg", "Тоҷикӣ", "Tajik" },
+        new string[] { "ta", "Tamil", "Tamil" },
+        new string[] { "tt", "Татар", "Tatar" },
+        new string[] { "te", "Telugu", "Telugu" },
+        new string[] { "th", "Thai", "Thai" },
+        new string[] { "ti", "Tigrinya", "Tigrinya" },
+        new string[] { "ts", "Xitsonga", "Tsonga" },
+        new string[] { "tk", "Türkmen", "Turkmen" },
+        new string[] { "ak", "Twi", "Twi" },
+        new string[] { "ur", "Urdu", "Urdu" },
+        new string[] { "ug", "Uyghur", "Uyghur" },
+        new string[] { "uz", "Oʻzbek", "Uzbek" },
+        new string[] { "cy", "Cymraeg", "Welsh" },
+        new string[] { "xh", "isiXhosa", "Xhosa" },
+        new string[] { "yi", "Yiddish", "Yiddish" },
+        new string[] { "yo", "Yorùbá", "Yoruba" },
+        new string[] { "zu", "isiZulu", "Zulu" }
+    };
+
+    // Escrita da direita para a esquerda (arabe, hebraico...) ou com letras que se juntam (indianos, tailandes...):
+    // o jogo nao sabe desenhar direito, entao o menu avisa que pode aparecer quebrado.
+    private static readonly string[] idiomasDificeis = new string[]
+    {
+        "ar", "iw", "fa", "ur", "ps", "sd", "ug", "yi", "dv", "ckb",
+        "hi", "bn", "ta", "te", "kn", "ml", "mr", "gu", "pa", "ne", "si", "or", "as", "sa",
+        "th", "lo", "km", "my", "am", "ti"
+    };
+
+    public static bool IdiomaDificil(string codigo)
+    {
+        return Array.IndexOf(idiomasDificeis, codigo) >= 0;
+    }
+
+    // linha do idioma (codigo, nome mostrado, nome em ingles) na lista fixa ou na do "Outro..."; null se nao achar
+    public static string[] AcharIdioma(string codigo)
+    {
+        for (int i = 0; i < Idiomas.Length; i++)
+            if (Idiomas[i][0] == codigo) return Idiomas[i];
+        for (int i = 0; i < IdiomasOutros.Length; i++)
+            if (IdiomasOutros[i][0] == codigo) return IdiomasOutros[i];
+        return null;
+    }
+
+    // true = o idioma escolhido nao esta na grade fixa (veio do "Outro...")
+    public static bool IdiomaOutro()
+    {
+        for (int i = 0; i < Idiomas.Length; i++)
+            if (Idiomas[i][0] == Idioma) return false;
+        return true;
+    }
 
     // Estilos de traducao (so valem para IA; o Google Tradutor nao aceita instrucoes).
     // nome, instrucao (em ingles, enviada junto com as regras fixas)
@@ -91,6 +238,18 @@ internal static class LiveConfig
     public static int Rpm = 60;         // pedidos por minuto
     public static int Lote = 8;         // textos por pedido (so IA)
     public static bool BotaoVisivel = true;
+    public static Rect Janela;          // posicao/tamanho do menu F8 (largura 0 = padrao, centralizado)
+    public static Vector2 PosBotao = new Vector2(-1f, -1f);   // botao "Traducao" (x < 0 = canto de cima a direita)
+    public static string Tema = "teal";                       // pasta do tema em v_common\UI
+    public static int Opacidade = 100;                         // transparencia do menu (40 a 100 %)
+    public static KeyCode TeclaMenu = KeyCode.F8;              // abre/fecha o menu
+    public static KeyCode TeclaPausa = KeyCode.F7;             // pausa/continua a traducao (None = sem tecla)
+    public static int EscalaUI = 100;                          // aba Interface: escala geral da interface do jogo (%)
+    public static int EscalaFonte = 100;                       // aba Interface: tamanho das fontes do jogo (%)
+    public static KeyCode TeclaResetUI = KeyCode.None;         // volta a interface do jogo para 100%
+    private static readonly Dictionary<string, int> escalaCanvas = new Dictionary<string, int>();   // % por Canvas (nome)
+    public static string HojeData = "";                        // "traduzidos hoje": dia (yyyy-MM-dd) e quantos
+    public static int HojeTotal;
     public static bool Contexto = true;     // manda as ultimas frases como contexto para a IA (so modo com chave)
     // tamanho minimo da fonte quando o texto nao cabe, em % do original (EncaixeFonte)
     public static int FonteMin = 65;
@@ -154,9 +313,8 @@ internal static class LiveConfig
 
     public static string NomeIdiomaIngles()
     {
-        for (int i = 0; i < Idiomas.Length; i++)
-            if (Idiomas[i][0] == Idioma) return Idiomas[i][2];
-        return Idioma;
+        string[] l = AcharIdioma(Idioma);
+        return l != null ? l[2] : Idioma;
     }
 
     public static void Marcar() { sujo = true; }
@@ -192,6 +350,18 @@ internal static class LiveConfig
             else if (k == "fonte_min") { if (int.TryParse(v, out n)) FonteMin = Mathf.Clamp(n, 50, 90); }
             else if (k == "fonte_trad") FonteTrad = v;
             else if (k == "raciocinio") Raciocinio = v == "1";
+            else if (k == "janela") Janela = LerRect(v);
+            else if (k == "botao_pos") { Rect b = LerRect(v + ";0;0"); if (v.Length > 0) PosBotao = new Vector2(b.x, b.y); }
+            else if (k == "tema") { if (v.Length > 0) Tema = v; }
+            else if (k == "opacidade") { if (int.TryParse(v, out n)) Opacidade = Mathf.Clamp(n, 40, 100); }
+            else if (k == "tecla_menu") TeclaMenu = LerTecla(v, KeyCode.F8);
+            else if (k == "tecla_pausa") TeclaPausa = LerTecla(v, KeyCode.F7);
+            else if (k == "hoje_data") HojeData = v;
+            else if (k == "escala_ui") { if (int.TryParse(v, out n)) EscalaUI = Mathf.Clamp(n, 50, 200); }
+            else if (k == "escala_fonte") { if (int.TryParse(v, out n)) EscalaFonte = Mathf.Clamp(n, 50, 200); }
+            else if (k == "tecla_reset_ui") TeclaResetUI = LerTecla(v, KeyCode.None);
+            else if (k.StartsWith("escala_canvas.")) { if (int.TryParse(v, out n)) DefinirEscalaCanvas(k.Substring(14), n); }
+            else if (k == "hoje_total") { if (int.TryParse(v, out n)) HojeTotal = Mathf.Max(0, n); }
             else if (k == "menu_idioma") { if (int.TryParse(v, out n)) LiveTxt.Atual = n; }
             else if (k == "estilo") { if (int.TryParse(v, out n)) Estilo = Mathf.Clamp(n, 0, Estilos.Length - 1); }
             else if (k == "prompt") PromptExtra = v.Replace("\\n", "\n");
@@ -221,6 +391,18 @@ internal static class LiveConfig
             sb.AppendLine("fonte_trad=" + FonteTrad);
             sb.AppendLine("raciocinio=" + (Raciocinio ? "1" : "0"));
             sb.AppendLine("menu_idioma=" + LiveTxt.Atual);
+            if (PosBotao.x >= 0f) sb.AppendLine("botao_pos=" + (int)PosBotao.x + ";" + (int)PosBotao.y);
+            sb.AppendLine("tema=" + Tema);
+            sb.AppendLine("opacidade=" + Opacidade);
+            sb.AppendLine("tecla_menu=" + TeclaMenu);
+            sb.AppendLine("tecla_pausa=" + TeclaPausa);
+            sb.AppendLine("escala_ui=" + EscalaUI);
+            sb.AppendLine("escala_fonte=" + EscalaFonte);
+            sb.AppendLine("tecla_reset_ui=" + TeclaResetUI);
+            foreach (KeyValuePair<string, int> kv in escalaCanvas) sb.AppendLine("escala_canvas." + kv.Key + "=" + kv.Value);
+            sb.AppendLine("hoje_data=" + HojeData);
+            sb.AppendLine("hoje_total=" + HojeTotal);
+            if (Janela.width > 0f) sb.AppendLine("janela=" + (int)Janela.x + ";" + (int)Janela.y + ";" + (int)Janela.width + ";" + (int)Janela.height);
             sb.AppendLine("estilo=" + Estilo);
             sb.AppendLine("prompt=" + (PromptExtra ?? "").Replace("\r", "").Replace("\n", "\\n"));
             foreach (KeyValuePair<string, string> kv in Chaves) sb.AppendLine("chave." + kv.Key + "=" + kv.Value);
@@ -232,5 +414,60 @@ internal static class LiveConfig
         {
             LiveLog.Erro("le_gravar", e, LiveLog.T("it_config"));
         }
+    }
+
+    private static KeyCode LerTecla(string v, KeyCode padrao)
+    {
+        try { return (KeyCode)Enum.Parse(typeof(KeyCode), v, true); }
+        catch { return padrao; }
+    }
+
+    // escala de um Canvas do jogo pelo nome (100 = sem mudar)
+    public static int EscalaCanvas(string nome)
+    {
+        int v;
+        return nome != null && escalaCanvas.TryGetValue(nome, out v) ? v : 100;
+    }
+
+    public static void DefinirEscalaCanvas(string nome, int v)
+    {
+        if (string.IsNullOrEmpty(nome) || nome.IndexOf('=') >= 0) return;
+        v = Mathf.Clamp(v, 50, 200);
+        if (v == 100) escalaCanvas.Remove(nome);
+        else escalaCanvas[nome] = v;
+    }
+
+    public static bool TemEscalaCanvas() { return escalaCanvas.Count > 0; }
+
+    // "Voltar ao padrao" da aba Interface
+    public static void ResetarInterface()
+    {
+        EscalaUI = 100;
+        EscalaFonte = 100;
+        escalaCanvas.Clear();
+        sujo = true;
+    }
+
+    // mais uma traducao nova hoje (zera quando o dia muda)
+    public static void ContarHoje()
+    {
+        string dia = DateTime.Now.ToString("yyyy-MM-dd");
+        if (HojeData != dia) { HojeData = dia; HojeTotal = 0; }
+        HojeTotal++;
+        sujo = true;
+    }
+
+    public static int TraduzidosHoje
+    {
+        get { return HojeData == DateTime.Now.ToString("yyyy-MM-dd") ? HojeTotal : 0; }
+    }
+
+    private static Rect LerRect(string v)
+    {
+        string[] p = v.Split(';');
+        int x, y, w, h;
+        if (p.Length == 4 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y) && int.TryParse(p[2], out w) && int.TryParse(p[3], out h))
+            return new Rect(x, y, w, h);
+        return new Rect();
     }
 }

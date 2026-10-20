@@ -74,10 +74,13 @@ internal class LiveDriver : MonoBehaviour
 
     private void OnGUI()
     {
+        // o menu do mod tambem e IMGUI: nao passa pela traducao de janelas de outros mods
+        LiveImgui.Pausado = true;
         try { LiveMenu.Desenhar(this); }
         catch (Exception e) { LiveLog.Erro("le_parte", e, "menu"); }
         try { PublicadorWorkshop.Desenhar(); }
         catch (Exception e) { LiveLog.Erro("le_parte", e, "publish panel"); }
+        LiveImgui.Pausado = false;
     }
 
     private void LateUpdate()
@@ -104,6 +107,10 @@ internal class LiveDriver : MonoBehaviour
         if (LiveMotor.AtualizarPendente) AtualizarProvisorios();
 
         if (versaoFonte != FonteEscolhida.Versao) ReaplicarFonte();
+
+        // escala da interface e das fontes do jogo (aba Interface): vale mesmo com a traducao pausada
+        try { EscalaUI.Tick(); }
+        catch (Exception e) { LiveLog.Erro("le_parte", e, "UI scale"); }
 
         if (!LiveConfig.Ativo) { fila.Clear(); naFila.Clear(); return; }
 

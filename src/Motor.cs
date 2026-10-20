@@ -199,6 +199,35 @@ internal static class LiveMotor
         return r;
     }
 
+    // ultimas traducoes novas (para a aba Painel do menu), a mais nova no fim
+    private static readonly List<string[]> ultimas = new List<string[]>();
+    public static List<string[]> Ultimas { get { return ultimas; } }
+
+    private static void LembrarUltima(string original, string traducao)
+    {
+        // traducao igual ao original (numeros, "x15") nao interessa na lista
+        if (string.IsNullOrEmpty(traducao) || traducao.Trim() == original.Trim()) return;
+        for (int i = ultimas.Count - 1; i >= 0; i--)
+            if (ultimas[i][0] == original) ultimas.RemoveAt(i);
+        ultimas.Add(new string[] { original, traducao });
+        while (ultimas.Count > 20) ultimas.RemoveAt(0);
+    }
+
+    // pedidos enviados no ultimo minuto (horario de cada um)
+    private static readonly List<float> envios = new List<float>();
+
+    public static int PedidosMinuto
+    {
+        get
+        {
+            float limite = Time.unscaledTime - 60f;
+            int velhos = 0;
+            while (velhos < envios.Count && envios[velhos] < limite) velhos++;
+            if (velhos > 0) envios.RemoveRange(0, velhos);
+            return envios.Count;
+        }
+    }
+
     // so frases (nao termos curtos), e nao muito longas, para nao gastar token a toa
     private static void LembrarRecente(string original, string traducao)
     {
@@ -466,6 +495,8 @@ internal static class LiveMotor
         else proximoEnvio = agora + 60f / Mathf.Max(1, LiveConfig.Rpm);
         emVoo++;
         Pedidos++;
+        envios.Add(agora);
+        if (envios.Count > 2000) envios.RemoveAt(0);
         drv.StartCoroutine(Enviar(p, lote, geracao, ep));
     }
 
@@ -609,7 +640,9 @@ internal static class LiveMotor
                         pistas.Remove(lote[i]);
                         Glossario.Auto(lote[i], trad[i], pista, catsIA != null ? Categorias.PorNome(catsIA[i]) : -1);
                         LembrarRecente(lote[i], trad[i]);
+                        LembrarUltima(lote[i], trad[i]);
                         Traduzidos++;
+                        LiveConfig.ContarHoje();
                     }
                     naFila.Remove(lote[i]);
                     tentativas.Remove(lote[i]);
@@ -726,19 +759,38 @@ internal static class LiveMotor
     public static void Testar(MonoBehaviour drv)
     {
         Teste = LiveTxt.T("t_testando");
+        drvTeste = drv;
         drv.StartCoroutine(EnviarTeste(LiveConfig.Atual));
     }
 
     private static IEnumerator EnviarTeste(Provedor p)
     {
+        List<string> lote = new List<string>();
+        lote.Add("你好，欢迎来到空间站！Welcome to the station!");
+        ResultadoTeste res = new ResultadoTeste();
+        yield return drvTeste.StartCoroutine(PedidoTeste(p, lote, false, res));
+        Teste = res.Texto != null ? "OK: " + res.Texto : res.Erro;
+    }
+
+    // resultado de um pedido de teste: Texto (traducao) ou Erro (mensagem pronta para o menu)
+    private class ResultadoTeste
+    {
+        public string Texto;
+        public string Erro;
+    }
+
+    private static MonoBehaviour drvTeste;
+
+    // Um pedido avulso (fora da fila, nao entra no cache nem nos contadores).
+    // semExtra = monta o pedido sem as instrucoes extras do jogador.
+    private static IEnumerator PedidoTeste(Provedor p, List<string> lote, bool semExtra, ResultadoTeste res)
+    {
         string motivo;
         if (!Provedores.Configurado(p, out motivo))
         {
-            Teste = LiveTxt.F("t_nao_deu", motivo);
+            res.Erro = LiveTxt.F("t_nao_deu", motivo);
             yield break;
         }
-        List<string> lote = new List<string>();
-        lote.Add("你好，欢迎来到空间站！Welcome to the station!");
         int ep = GoogleEp;
         int codigo = 0;
         string err = null;
@@ -748,11 +800,13 @@ internal static class LiveMotor
         {
             UnityWebRequest req = null;
             string erro = null;
+            Provedores.SemExtra = semExtra;
             try { req = Provedores.Montar(p, lote, ep); }
             catch (Exception e) { erro = e.Message; }
+            finally { Provedores.SemExtra = false; }
             if (req == null)
             {
-                Teste = LiveTxt.F("t_erro", erro);
+                res.Erro = LiveTxt.F("t_erro", erro);
                 yield break;
             }
             yield return req.SendWebRequest();
@@ -767,10 +821,52 @@ internal static class LiveMotor
         if (codigo == 200)
         {
             List<string> r = Provedores.Interpretar(p, lote, corpo, ep);
-            Teste = r != null ? "OK: " + r[0] : LiveTxt.T("t_formato");
+            if (r != null) res.Texto = r[0];
+            else res.Erro = LiveTxt.T("t_formato");
         }
-        else if (codigo == 401 || codigo == 403) Teste = LiveTxt.F("t_chave", codigo);
-        else if (codigo == 404) Teste = LiveTxt.T("t_404");
-        else Teste = LiveTxt.F("t_falhou", codigo, err);
+        else if (codigo == 401 || codigo == 403) res.Erro = LiveTxt.F("t_chave", codigo);
+        else if (codigo == 404) res.Erro = LiveTxt.T("t_404");
+        else res.Erro = LiveTxt.F("t_falhou", codigo, err);
+    }
+
+    // ---------------- teste das instrucoes extras (aba Estilo) ----------------
+    // O mesmo texto vai duas vezes para a IA escolhida: so com o estilo, e com estilo + instrucoes extras.
+
+    public const string TextoTesteEstilo = "Commander, the station's lexicon database is offline. Acquire three energy cells from the derelict freighter, then return to the hangar. Beware: pirates have been spotted near the asteroid belt. Your reward will be 500 credits and a rare weapon blueprint. Good luck out there, pilot!";
+
+    public static bool TestandoEstilo;
+    public static string EstiloEstado = "";     // linha de cima da telinha (testando / recebido / erro)
+    public static bool EstiloOk;
+    public static string EstiloSem = "";        // traducao sem as instrucoes extras
+    public static string EstiloCom = "";        // traducao com as instrucoes extras
+
+    public static void TestarEstilo(MonoBehaviour drv)
+    {
+        if (TestandoEstilo) return;
+        drvTeste = drv;
+        TestandoEstilo = true;
+        EstiloOk = false;
+        EstiloSem = "";
+        EstiloCom = "";
+        EstiloEstado = LiveTxt.T("t_testando");
+        drv.StartCoroutine(EnviarTesteEstilo(LiveConfig.Atual));
+    }
+
+    private static IEnumerator EnviarTesteEstilo(Provedor p)
+    {
+        List<string> lote = new List<string>();
+        lote.Add(TextoTesteEstilo);
+        ResultadoTeste sem = new ResultadoTeste();
+        ResultadoTeste com = new ResultadoTeste();
+        yield return drvTeste.StartCoroutine(PedidoTeste(p, lote, true, sem));
+        EstiloSem = sem.Texto ?? sem.Erro ?? "";
+        if (sem.Texto != null)
+        {
+            yield return drvTeste.StartCoroutine(PedidoTeste(p, lote, false, com));
+            EstiloCom = com.Texto ?? com.Erro ?? "";
+        }
+        EstiloOk = sem.Texto != null && com.Texto != null;
+        EstiloEstado = EstiloOk ? LiveTxt.T("et_recebido") : (com.Erro ?? sem.Erro ?? "");
+        TestandoEstilo = false;
     }
 }

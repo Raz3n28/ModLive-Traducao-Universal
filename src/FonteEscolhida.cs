@@ -158,9 +158,9 @@ internal static class FonteEscolhida
         return i > 0 && i < filtradas.Count ? filtradas[i].Nome : "";
     }
 
-    // Previa: botao inteiro ja desenhado com o nome na propria fonte (v_common/Fontes/previas/<nome>.png,
-    // <nome>_hover.png e <nome>_sel.png), gerado fora do jogo porque o menu IMGUI nao desenha fonte carregada
-    // de arquivo. sufixo = "", "_hover" ou "_sel". null = sem imagem (usa o nome).
+    // Previa: o nome escrito na propria fonte, branco com fundo transparente (v_common/Fontes/previas/<nome>.png,
+    // em 2x), gerado por ferramentas/gerar_previas_fontes.py porque o menu IMGUI nao desenha fonte carregada
+    // de arquivo. O menu pinta na cor do tema. sufixo = "" (reservado). null = sem imagem (usa o nome).
     private static readonly Dictionary<string, Texture2D> previas = new Dictionary<string, Texture2D>();
 
     public static Texture2D Previa(int i, string sufixo)
@@ -233,6 +233,16 @@ internal static class FonteEscolhida
             case "vi": return basico + "ăâđêôơưĂÂĐÊÔƠƯạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ";
             case "cs": return basico + "áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ";
             case "ro": return basico + "ăâîĂÂÎ";
+            case "pt-PT": return basico + "ãõáéíóúâêôàçÃÕÁÉÍÓÚÂÊÔÀÇ";
+            case "sv": return basico + "åäöÅÄÖ";
+            case "da":
+            case "no": return basico + "æøåÆØÅ";
+            case "fi": return basico + "äöåÄÖÅ";
+            case "hu": return basico + "áéíóöőúüűÁÉÍÓÖŐÚÜŰ";
+            case "el": return "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρστυφχψωάέήίόύώ";
+            case "bg": return Cirilico + "Ъъ";
+            case "sk": return basico + "áäčďéíľĺňóôŕšťúýžÁÄČĎÉÍĽĹŇÓÔŔŠŤÚÝŽ";
+            case "hr": return basico + "čćđšžČĆĐŠŽ";
             case "ja": return "日本語のをはがでしたアイウ";
             case "ko": return "한국어의가는을에서";
             case "zh-CN": return "中文的是在了不和有";

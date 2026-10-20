@@ -1,0 +1,142 @@
+PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
+================================================
+
+[x] Menu F8, painel lateral: trocar "By Raz3n" por "By PauloRaz3n" (src\Menu.cs, funcao Lateral).
+
+[x] Aba "Painel" (primeira do menu), no visual escuro/teal da proposta B:
+    - faixa de cima: etiqueta ATIVA/PAUSADA + numeros + botao Pausar/Comecar;
+    - 6 cartoes (Modo e provedor, Idioma, Estilo, Glossario, Cache e limite, Fontes) com "Abrir >" para a aba;
+    - quadro "Estado": Traduzidos, Em cache, Pedidos/min (de N), Glossario; limite de pedidos com - N +;
+      Cache em disco e Limpar cache;
+    - "Ultimas traducoes": original -> traducao, etiqueta da categoria e Editar.
+    Falta criar: contador de pedidos do ultimo minuto, lista das ultimas ~20 traducoes,
+    contagem de travados e decidir "Traduzidos hoje" (contador diario salvo) ou "nesta sessao".
+
+[x] Teclas configuraveis (salvas no config.txt), na aba Avancado:
+    - tecla que abre/fecha o menu (hoje fixa no F8);
+    - tecla que pausa e continua a traducao (uma tecla so para as duas funcoes, sem tecla por padrao
+      ou uma livre como F7);
+    - botao "Trocar tecla": aperta e o mod grava a proxima tecla; Esc cancela; avisa se repetir a outra.
+
+[x] Botao "Traducao" do canto da tela arrastavel (fica em cima do botao do editor de personagens):
+    - segurar e arrastar move o botao; clique rapido (sem arrastar) continua abrindo o menu;
+    - posicao salva no config.txt (como a janela do menu) e presa dentro da tela;
+    - opcao "Voltar botao para o canto" na aba Avancado, caso ele se perca.
+
+[x] Aparencia: 6 temas (Teal, Brasil, EUA, Roxo Neon, Por do Sol, Claro), icones nas abas, sombra da janela,
+    barra de titulo com etiqueta de estado e "x", cartoes nas abas, interruptor no lugar da caixa de marcar,
+    animacoes (abrir, aba que desliza, interruptor, botao do canto pulsando com fila), barra da fila
+    e transparencia do menu (aba Avancado > Aparencia).
+
+[x] Aba Fontes nao segue o tema (no Claro fica com blocos pretos; nos outros o escolhido fica teal e os
+    botoes nao combinam com os das fontes do Windows).
+    Causa: as previas em v_common\Fontes\previas\*.png tem o fundo pintado na imagem (#1b2128, hover
+    #29323c, escolhida teal #2dd4bf), entao nao mudam com o tema.
+    Conserto: gerar as previas so com o nome da fonte em branco e fundo transparente; o menu desenha o botao
+    do tema (sBtn / sSel, igual "Original do jogo" e as do Windows) e pinta o nome por cima com a cor do
+    texto do tema (escolhida = cor do texto do destaque). Assim todos os botoes da aba ficam iguais em
+    todos os temas, e o nome continua escrito na propria fonte.
+
+[x] Aba "Interface" (com icone proprio): mexer na interface do proprio jogo, salvo no config.txt.
+    - escala geral da UI de 50% a 200% (multiplica o CanvasScaler de todos os Canvas do jogo);
+    - escala separada para HUD (barras de cima/baixo) e para janelas (inventario, personagem...);
+    - tamanho das fontes de 50% a 200%, so os textos (TMP_Text e UI.Text), sem mexer nas janelas;
+    - passos de 5% ou 10%; destacar os "nitidos" (50%, 100%, 200%) por causa da fonte pixelada;
+    - aviso quando passar de uns 70-75% para baixo (letra pode ficar ilegivel e o clique menor);
+    - muda ao vivo; botao "Voltar ao padrao" sempre visivel + tecla de atalho para resetar;
+    - reaplicar quando o jogo trocar de tela ou de resolucao (como a varredura de textos);
+    - nao afeta janelas IMGUI de outros mods (ex.: editor de personagens);
+    - conferir antes se o jogo ja tem escala de UI nas configuracoes (ai o mod so complementa).
+
+[x] Painel: tirar o destaque do cartao Glossario (todos os 6 cartoes iguais, sem fundo colorido).
+[x] Painel, "Ultimas traducoes": nao mostrar quando a traducao e igual ao original (ex.: x15 -> x15, x3000 -> x3000)
+    e alinhar a seta "->" com o texto (hoje fica um pouco acima).
+
+[x] Cursor de texto no campo errado (Glossario, Categorias e outros campos depois do Buscar): clicando num
+    campo, o cursor piscando aparece no campo de CIMA (o texto digitado vai no certo); clicando no de cima,
+    o cursor some. CAUSA CONFIRMADA: em Lateral (src\Menu.cs) o GUI.Box do fundo da aba escolhida so e
+    chamado no Repaint; o GUI.Box pega um numero de controle (control ID), entao no Repaint todos os
+    controles seguintes ficam com o numero +1 e o cursor e desenhado no campo anterior.
+    Conserto: chamar esse GUI.Box em todos os eventos (so atualizar a posicao animada no Repaint).
+    Conferir tambem o GUI.Box do botao do canto (BotaoCanto), que hoje so roda no Repaint.
+[x] Painel > "Ultimas traducoes" > Editar num texto que nao e termo do glossario: hoje abre o "+ Novo termo"
+    ja preenchido, mas com frase longa (varias linhas, com {0}) o Original aparece vazio e a Traducao enorme.
+    So oferecer "Editar" para termos curtos (Glossario.Termo); frase longa abre so a busca.
+
+[x] QR code do Ko-fi na lateral do menu (cartao "Me apoie", texto no idioma do menu, sem link escrito;
+    clicar no QR abre a pagina). Aparece quando a janela tem altura para ele.
+
+LISTA DE DEFEITOS (rodada nova)
+-------------------------------
+[x] 1. Caixa "Instrucoes extras" (aba Estilo) passa da borda direita da janela do menu: o texto longo
+    fica numa linha so, sem quebrar, e a caixa estica para fora da tela do mod.
+    Provavel causa: em Caixa (src\Menu.cs) a caixa e GUILayout.TextField com wordWrap ligado so na hora,
+    mas o GUILayout calcula a largura pelo texto inteiro em uma linha (CalcSize), entao a caixa cresce
+    com o texto. Conserto: dar largura fixa (a largura livre da aba, ex. GUILayout.GetRect com
+    ExpandWidth + MaxWidth, ou Width da area) para a quebra de linha funcionar. Vale para todas as
+    chamadas de Caixa (Instrucoes extras e Palavras/Instrucao das Categorias).
+
+[x] 2. Aba Estilo: o usuario nao sabe se as "Instrucoes extras" foram aceitas (hoje elas sao salvas sozinhas
+    a cada letra digitada, sem nenhum aviso). Pedido:
+    - botao "Enviar / Testar instrucoes" embaixo da caixa;
+    - ao clicar, o mod manda um texto de teste para a IA com o estilo + instrucoes atuais e mostra uma
+      "telinha" (quadro dentro do cartao) com: "Instrucoes recebidas" + 3 quadros:
+      Original (texto de teste), Sem instrucoes (so o estilo) e Com instrucoes (estilo + instrucoes extras).
+      Sao 2 pedidos para a IA (decidido pelo usuario). Os dois usam a MESMA IA, modelo e estilo que o
+      jogador escolheu; a unica diferenca entre eles sao as instrucoes extras;
+    - assim o jogador ve na hora se a traducao mudou do jeito que pediu.
+    - Lugar (combinado com o usuario): botao "Testar instrucoes" na linha do "Limpar"; a telinha com os
+      3 quadros fica num cartao novo logo abaixo do cartao das instrucoes (o espaco vazio da aba Estilo).
+    - Os 3 quadros LADO A LADO (3 colunas, texto quebrando a linha) quando a janela tiver largura.
+      Se nao couber (janela estreita), um embaixo do outro, e a pagina usa a barra de rolagem
+      (a area das abas ja tem rolagem: BeginScrollView em src\Menu.cs; conferir que ela aparece aqui).
+    Texto de teste (ingles, ~290 caracteres, com palavras que a IA costuma traduzir "dificil"):
+      "Commander, the station's lexicon database is offline. Acquire three energy cells from the derelict
+       freighter, then return to the hangar. Beware: pirates have been spotted near the asteroid belt.
+       Your reward will be 500 credits and a rare weapon blueprint. Good luck out there, pilot!"
+    Onde mexer: src\Menu.cs (PaginaEstilo), reaproveitar o caminho do "Testar conexao" (LiveMotor.Testar)
+    para fazer um pedido unico fora da fila; textos novos nos 6 idiomas do menu. O teste NAO entra no cache.
+    So no modo com chave (no Google gratis a aba Estilo ja fica desligada).
+
+[x] 3. Aba Geral > "Traduzir para": poder escolher um idioma alem dos 18 da lista.
+    Como e hoje: lista fixa LiveConfig.Idiomas em src\Config.cs (codigo, nome no idioma, nome em ingles
+    para a IA) + letras de cada idioma em Letras() de src\FonteEscolhida.cs (para escolher fonte que cobre).
+    Trabalho: pouco. Cada idioma novo e 1 linha em Idiomas + 1 linha em Letras. Cache e glossario ja sao
+    separados por codigo (cache_<codigo>.txt), entao nada e resetado.
+    DECIDIDO PELO USUARIO: fazer A + B.
+    A) mais idiomas fixos na grade (escolha minha, os mais comuns: sueco, grego, hungaro, dinamarques,
+       finlandes, noruegues, bulgaro, portugues de Portugal, malaio, filipino...).
+    B) botao "Outro..." no fim da grade. Ao clicar, abre um campo de busca + lista com rolagem com todos os
+       idiomas que o Google Tradutor aceita (tabela interna: codigo + nome no idioma + nome em ingles).
+       O jogador digita "sue" e aparece "Svenska (Swedish)"; clica e pronto. Assim o codigo sempre esta
+       certo (o Google precisa do codigo) e a IA recebe o nome em ingles. O escolhido fica salvo no
+       config.txt e aparece na grade no lugar do "Outro..." (com um "trocar").
+       Idiomas da direita para a esquerda e de letras que se juntam aparecem com aviso "pode ficar quebrado".
+       Se o idioma nao tiver letras em Letras(), usar so as letras basicas para a busca de fonte.
+    Cuidado: arabe, hebraico, persa (escrita da direita para a esquerda) e tailandes/hindi (letras que se
+    juntam) aparecem quebrados/invertidos no jogo; nao oferecer esses (ou avisar).
+    Aproveitar: Japanese, Korean e Chinese (simpl.) estao escritos em ingles na lista (provavelmente porque a
+    fonte do menu nao tem essas letras); manter, mas conferir.
+
+[x] 4. Mudar as opcoes "Mandar as ultimas frases como contexto" e "IA pensa antes de traduzir" da aba Avancado
+    (cartao "Opcoes") para a aba Estilo, porque mexem no resultado da traducao.
+    Onde: src\Menu.cs, PaginaAvancado (cartao av_opcoes, as 2 Marca de LiveConfig.Contexto e
+    LiveConfig.Raciocinio) -> PaginaEstilo, num cartao proprio (ex.: "Como a IA traduz") entre o estilo e as
+    instrucoes extras. Na aba Estilo elas ja somem no modo Google (a aba so mostra o aviso), entao a frase
+    "So no modo com chave" pode sair. "Fonte minima" e o resto continuam no Avancado.
+    Os 2 testes do item 2 devem usar essas opcoes tambem (mesma configuracao do jogador).
+    Detalhe visto no print: o texto do 1o interruptor comeca um pouco mais a direita que o do 2o; alinhar.
+
+Notas da rodada da lista de defeitos (1 a 4):
+  - 1: Caixa (src\Menu.cs) agora tem largura fixa (a da aba) e cresce para baixo se o texto passar das linhas.
+  - 2: botao "Testar instrucoes" ao lado do "Limpar" (so liga com instrucoes escritas); telinha "Teste das
+    instrucoes" com Original / Sem instrucoes / Com instrucoes (LiveMotor.TestarEstilo, Provedores.SemExtra).
+    O "Testar conexao" passou a usar o mesmo pedido de teste (PedidoTeste), sem mudar o que mostra.
+  - 3: +12 idiomas fixos (pt-PT, sv, da, no, fi, hu, el, bg, sk, hr, ms, tl) e botao "Outro idioma..." com busca
+    (LiveConfig.IdiomasOutros, ~95 idiomas do Google). Idiomas dificeis ficam com * e aviso.
+  - 4: cartao "Como a IA traduz" na aba Estilo (contexto + IA pensa); saiu do Avancado. Textos sem o espaco
+    do comeco (alinhados) e sem "So no modo com chave".
+
+Notas do que foi feito na ultima rodada:
+  - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).
+  - Aba Interface: tecla de voltar ao padrao comeca sem tecla (escolha em Avancado > Teclas ou na propria aba).

@@ -437,6 +437,9 @@ internal static class Provedores
         return r;
     }
 
+    // true so durante a montagem do pedido "sem instrucoes" do teste da aba Estilo
+    public static bool SemExtra;
+
     // Regras fixas (garantem o formato da resposta) + estilo escolhido pelo jogador
     // + termos do glossario que aparecem nos textos + textos recentes como contexto.
     public static string PromptSistema(List<string> textos)
@@ -467,7 +470,7 @@ internal static class Provedores
         if (e < 0 || e >= LiveConfig.Estilos.Length) e = 0;
         string estilo = LiveConfig.Estilos[e][1];
         if (estilo.Length > 0) sb.Append("\nStyle: ").Append(estilo);
-        string extra = LiveConfig.PromptExtra;
+        string extra = SemExtra ? null : LiveConfig.PromptExtra;
         if (extra != null && extra.Trim().Length > 0)
             sb.Append("\nExtra instructions from the player (follow them, but the hard rules above always win): ").Append(extra.Trim());
         if (comCategoria)

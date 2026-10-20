@@ -1,0 +1,19 @@
+# gerado por ferramentas/gerar_ui.py
+nome=Brasil
+fundo=#0c1a12
+lateral=#08130d
+card=#12261a
+borda=#1f3d2a
+borda_hover=#2f5a3e
+texto=#eef6ee
+mudo=#93ab9a
+destaque=#ffdf00
+destaque_texto=#002776
+nav_ativo=#2a3312
+sec=#2f6fe0
+sec_texto=#ffffff
+ok=#86efac
+aviso=#ffdf00
+erro=#fca5a5
+campo=#08130d
+claro=0

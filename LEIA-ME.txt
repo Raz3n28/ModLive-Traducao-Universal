@@ -5,7 +5,9 @@ O QUE FAZ
   Traduz em tempo real qualquer texto que aparecer na tela, para o idioma escolhido no menu.
   - Modo GRATIS: Google Tradutor, sem chave (endpoint nao oficial, qualidade media).
   - Modo COM CHAVE: DeepSeek, Gemini, Groq, OpenRouter, OpenAI, Claude, Ollama ou personalizado.
-  - Estilos de traducao prontos + campo de instrucoes extras (so no modo IA).
+  - Estilos de traducao prontos + campo de instrucoes extras (so no modo IA), com botao "Testar instrucoes"
+    que mostra o texto de teste traduzido sem e com as instrucoes.
+  - 30 idiomas de destino na grade + "Outro idioma..." com busca (os outros idiomas do Google Tradutor).
   - Cache em disco: cada texto e traduzido uma vez.
   - Auto-resize da fonte e fontes reserva do Windows (acentos e outros alfabetos).
   - GLOSSARIO: nomes, itens, armas, habilidades, estacoes, faccoes, botoes e titulos curtos ficam numa
@@ -15,6 +17,13 @@ O QUE FAZ
   - Aba Avancado: pre-traduzir textos ja carregados, exportar/importar glossario e cache (pasta
     "compartilhar"), fonte minima ajustavel e "Limpar cache" com confirmacao.
   - Menu do mod em 6 idiomas (Portugues, Ingles, Espanhol, Russo, Frances, Alemao), escolhido no proprio F8.
+  - Janelas IMGUI de outros mods (ex.: editor de personagens) tambem sao traduzidas, via Harmony
+    (0Harmony.dll 2.3.6, licenca MIT, vai junto em v_common\Assemblies).
+  - Visual do menu F8 em PNG (modelo\v_common\UI\<tema>, gerado por ferramentas\gerar_ui.py): 6 temas, logo PR,
+    aba Painel, janela arrastavel e redimensionavel, botao do canto arrastavel.
+  - Teclas configuraveis (aba Avancado > Teclas): abrir o menu (F8) e pausar/continuar (F7).
+  - Aba Interface: escala da interface do jogo e tamanho das fontes (50% a 200%), geral e por parte da tela.
+  - Previas da aba Fontes: ferramentas\gerar_previas_fontes.py (nome em branco, o menu pinta na cor do tema).
   Nao altera arquivo do jogo. Desativou o mod = jogo original.
 
 PASSO A PASSO

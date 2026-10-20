@@ -1,0 +1,7 @@
+# id=nome, na ordem do menu (gerado por ferramentas/gerar_ui.py)
+teal=Teal
+brasil=Brasil
+eua=EUA
+roxo=Roxo Neon
+sol=Por do Sol
+claro=Claro

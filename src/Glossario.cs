@@ -104,6 +104,13 @@ internal static class Glossario
         return false;
     }
 
+    // termo do glossario com esse original (null se nao tem)
+    public static TermoGlossario Obter(string original)
+    {
+        TermoGlossario t;
+        return original != null && mapa.TryGetValue(original, out t) ? t : null;
+    }
+
     public static bool Existe(string original)
     {
         return mapa.ContainsKey(original);
