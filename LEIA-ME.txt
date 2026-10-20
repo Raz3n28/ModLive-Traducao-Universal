@@ -5,7 +5,9 @@ O QUE FAZ
   Traduz em tempo real qualquer texto que aparecer na tela, para o idioma escolhido no menu.
   - Modo GRATIS: Google Tradutor, sem chave (endpoint nao oficial, qualidade media).
   - Modo COM CHAVE: DeepSeek, Gemini, Groq, OpenRouter, OpenAI, Claude, Ollama ou personalizado.
-  - Estilos de traducao prontos + campo de instrucoes extras (so no modo IA).
+  - Estilos de traducao prontos + campo de instrucoes extras (so no modo IA), com botao "Testar instrucoes"
+    que mostra o texto de teste traduzido sem e com as instrucoes.
+  - 30 idiomas de destino na grade + "Outro idioma..." com busca (os outros idiomas do Google Tradutor).
   - Cache em disco: cada texto e traduzido uma vez.
   - Auto-resize da fonte e fontes reserva do Windows (acentos e outros alfabetos).
   - GLOSSARIO: nomes, itens, armas, habilidades, estacoes, faccoes, botoes e titulos curtos ficam numa

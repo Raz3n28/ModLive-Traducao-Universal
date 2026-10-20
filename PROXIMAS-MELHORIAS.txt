@@ -68,7 +68,7 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
 
 LISTA DE DEFEITOS (rodada nova)
 -------------------------------
-[ ] 1. Caixa "Instrucoes extras" (aba Estilo) passa da borda direita da janela do menu: o texto longo
+[x] 1. Caixa "Instrucoes extras" (aba Estilo) passa da borda direita da janela do menu: o texto longo
     fica numa linha so, sem quebrar, e a caixa estica para fora da tela do mod.
     Provavel causa: em Caixa (src\Menu.cs) a caixa e GUILayout.TextField com wordWrap ligado so na hora,
     mas o GUILayout calcula a largura pelo texto inteiro em uma linha (CalcSize), entao a caixa cresce
@@ -76,7 +76,7 @@ LISTA DE DEFEITOS (rodada nova)
     ExpandWidth + MaxWidth, ou Width da area) para a quebra de linha funcionar. Vale para todas as
     chamadas de Caixa (Instrucoes extras e Palavras/Instrucao das Categorias).
 
-[ ] 2. Aba Estilo: o usuario nao sabe se as "Instrucoes extras" foram aceitas (hoje elas sao salvas sozinhas
+[x] 2. Aba Estilo: o usuario nao sabe se as "Instrucoes extras" foram aceitas (hoje elas sao salvas sozinhas
     a cada letra digitada, sem nenhum aviso). Pedido:
     - botao "Enviar / Testar instrucoes" embaixo da caixa;
     - ao clicar, o mod manda um texto de teste para a IA com o estilo + instrucoes atuais e mostra uma
@@ -98,7 +98,7 @@ LISTA DE DEFEITOS (rodada nova)
     para fazer um pedido unico fora da fila; textos novos nos 6 idiomas do menu. O teste NAO entra no cache.
     So no modo com chave (no Google gratis a aba Estilo ja fica desligada).
 
-[ ] 3. Aba Geral > "Traduzir para": poder escolher um idioma alem dos 18 da lista.
+[x] 3. Aba Geral > "Traduzir para": poder escolher um idioma alem dos 18 da lista.
     Como e hoje: lista fixa LiveConfig.Idiomas em src\Config.cs (codigo, nome no idioma, nome em ingles
     para a IA) + letras de cada idioma em Letras() de src\FonteEscolhida.cs (para escolher fonte que cobre).
     Trabalho: pouco. Cada idioma novo e 1 linha em Idiomas + 1 linha em Letras. Cache e glossario ja sao
@@ -118,7 +118,7 @@ LISTA DE DEFEITOS (rodada nova)
     Aproveitar: Japanese, Korean e Chinese (simpl.) estao escritos em ingles na lista (provavelmente porque a
     fonte do menu nao tem essas letras); manter, mas conferir.
 
-[ ] 4. Mudar as opcoes "Mandar as ultimas frases como contexto" e "IA pensa antes de traduzir" da aba Avancado
+[x] 4. Mudar as opcoes "Mandar as ultimas frases como contexto" e "IA pensa antes de traduzir" da aba Avancado
     (cartao "Opcoes") para a aba Estilo, porque mexem no resultado da traducao.
     Onde: src\Menu.cs, PaginaAvancado (cartao av_opcoes, as 2 Marca de LiveConfig.Contexto e
     LiveConfig.Raciocinio) -> PaginaEstilo, num cartao proprio (ex.: "Como a IA traduz") entre o estilo e as
@@ -126,6 +126,16 @@ LISTA DE DEFEITOS (rodada nova)
     "So no modo com chave" pode sair. "Fonte minima" e o resto continuam no Avancado.
     Os 2 testes do item 2 devem usar essas opcoes tambem (mesma configuracao do jogador).
     Detalhe visto no print: o texto do 1o interruptor comeca um pouco mais a direita que o do 2o; alinhar.
+
+Notas da rodada da lista de defeitos (1 a 4):
+  - 1: Caixa (src\Menu.cs) agora tem largura fixa (a da aba) e cresce para baixo se o texto passar das linhas.
+  - 2: botao "Testar instrucoes" ao lado do "Limpar" (so liga com instrucoes escritas); telinha "Teste das
+    instrucoes" com Original / Sem instrucoes / Com instrucoes (LiveMotor.TestarEstilo, Provedores.SemExtra).
+    O "Testar conexao" passou a usar o mesmo pedido de teste (PedidoTeste), sem mudar o que mostra.
+  - 3: +12 idiomas fixos (pt-PT, sv, da, no, fi, hu, el, bg, sk, hr, ms, tl) e botao "Outro idioma..." com busca
+    (LiveConfig.IdiomasOutros, ~95 idiomas do Google). Idiomas dificeis ficam com * e aviso.
+  - 4: cartao "Como a IA traduz" na aba Estilo (contexto + IA pensa); saiu do Avancado. Textos sem o espaco
+    do comeco (alinhados) e sem "So no modo com chave".
 
 Notas do que foi feito na ultima rodada:
   - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).

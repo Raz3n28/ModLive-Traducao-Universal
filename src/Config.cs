@@ -64,10 +64,157 @@ internal static class LiveConfig
         new string[] { "vi", "Tiếng Việt", "Vietnamese" },
         new string[] { "cs", "Čeština", "Czech" },
         new string[] { "ro", "Română", "Romanian" },
+        new string[] { "pt-PT", "Português (PT)", "European Portuguese" },
+        new string[] { "sv", "Svenska", "Swedish" },
+        new string[] { "da", "Dansk", "Danish" },
+        new string[] { "no", "Norsk", "Norwegian" },
+        new string[] { "fi", "Suomi", "Finnish" },
+        new string[] { "hu", "Magyar", "Hungarian" },
+        new string[] { "el", "Ελληνικά", "Greek" },
+        new string[] { "bg", "Български", "Bulgarian" },
+        new string[] { "sk", "Slovenčina", "Slovak" },
+        new string[] { "hr", "Hrvatski", "Croatian" },
+        new string[] { "ms", "Melayu", "Malay" },
+        new string[] { "tl", "Filipino", "Filipino" },
         new string[] { "ja", "Japanese", "Japanese" },
         new string[] { "ko", "Korean", "Korean" },
         new string[] { "zh-CN", "Chinese (simpl.)", "Simplified Chinese" }
     };
+
+    // Botao "Outro..." da aba Geral: os outros idiomas que o Google Tradutor aceita (codigo, nome mostrado, nome em
+    // ingles para a IA). Nome mostrado no proprio idioma quando a fonte do menu tem as letras (latim, cirilico);
+    // nos outros alfabetos fica em ingles, como Japanese/Korean acima.
+    public static readonly string[][] IdiomasOutros = new string[][]
+    {
+        new string[] { "af", "Afrikaans", "Afrikaans" },
+        new string[] { "sq", "Shqip", "Albanian" },
+        new string[] { "am", "Amharic", "Amharic" },
+        new string[] { "ar", "Arabic", "Arabic" },
+        new string[] { "hy", "Armenian", "Armenian" },
+        new string[] { "as", "Assamese", "Assamese" },
+        new string[] { "ay", "Aymar aru", "Aymara" },
+        new string[] { "az", "Azərbaycan", "Azerbaijani" },
+        new string[] { "bm", "Bamanankan", "Bambara" },
+        new string[] { "eu", "Euskara", "Basque" },
+        new string[] { "be", "Беларуская", "Belarusian" },
+        new string[] { "bn", "Bengali", "Bengali" },
+        new string[] { "bs", "Bosanski", "Bosnian" },
+        new string[] { "ca", "Català", "Catalan" },
+        new string[] { "ceb", "Cebuano", "Cebuano" },
+        new string[] { "ny", "Chichewa", "Chichewa" },
+        new string[] { "zh-TW", "Chinese (trad.)", "Traditional Chinese" },
+        new string[] { "co", "Corsu", "Corsican" },
+        new string[] { "dv", "Dhivehi", "Dhivehi" },
+        new string[] { "eo", "Esperanto", "Esperanto" },
+        new string[] { "et", "Eesti", "Estonian" },
+        new string[] { "ee", "Eʋegbe", "Ewe" },
+        new string[] { "fy", "Frysk", "Frisian" },
+        new string[] { "gl", "Galego", "Galician" },
+        new string[] { "ka", "Georgian", "Georgian" },
+        new string[] { "gn", "Avañe'ẽ", "Guarani" },
+        new string[] { "gu", "Gujarati", "Gujarati" },
+        new string[] { "ht", "Kreyòl ayisyen", "Haitian Creole" },
+        new string[] { "ha", "Hausa", "Hausa" },
+        new string[] { "haw", "ʻŌlelo Hawaiʻi", "Hawaiian" },
+        new string[] { "iw", "Hebrew", "Hebrew" },
+        new string[] { "hi", "Hindi", "Hindi" },
+        new string[] { "hmn", "Hmong", "Hmong" },
+        new string[] { "is", "Íslenska", "Icelandic" },
+        new string[] { "ig", "Igbo", "Igbo" },
+        new string[] { "ilo", "Ilokano", "Ilocano" },
+        new string[] { "ga", "Gaeilge", "Irish" },
+        new string[] { "jw", "Basa Jawa", "Javanese" },
+        new string[] { "kn", "Kannada", "Kannada" },
+        new string[] { "kk", "Қазақ", "Kazakh" },
+        new string[] { "km", "Khmer", "Khmer" },
+        new string[] { "rw", "Kinyarwanda", "Kinyarwanda" },
+        new string[] { "ku", "Kurdî", "Kurdish (Kurmanji)" },
+        new string[] { "ckb", "Kurdish (Sorani)", "Kurdish (Sorani)" },
+        new string[] { "ky", "Кыргызча", "Kyrgyz" },
+        new string[] { "lo", "Lao", "Lao" },
+        new string[] { "la", "Latina", "Latin" },
+        new string[] { "lv", "Latviešu", "Latvian" },
+        new string[] { "ln", "Lingála", "Lingala" },
+        new string[] { "lt", "Lietuvių", "Lithuanian" },
+        new string[] { "lg", "Luganda", "Luganda" },
+        new string[] { "lb", "Lëtzebuergesch", "Luxembourgish" },
+        new string[] { "mk", "Македонски", "Macedonian" },
+        new string[] { "mg", "Malagasy", "Malagasy" },
+        new string[] { "ml", "Malayalam", "Malayalam" },
+        new string[] { "mt", "Malti", "Maltese" },
+        new string[] { "mi", "Māori", "Maori" },
+        new string[] { "mr", "Marathi", "Marathi" },
+        new string[] { "mn", "Монгол", "Mongolian" },
+        new string[] { "my", "Burmese", "Myanmar (Burmese)" },
+        new string[] { "ne", "Nepali", "Nepali" },
+        new string[] { "or", "Odia", "Odia (Oriya)" },
+        new string[] { "om", "Oromoo", "Oromo" },
+        new string[] { "ps", "Pashto", "Pashto" },
+        new string[] { "fa", "Persian", "Persian" },
+        new string[] { "pa", "Punjabi", "Punjabi" },
+        new string[] { "qu", "Runasimi", "Quechua" },
+        new string[] { "sm", "Gagana Samoa", "Samoan" },
+        new string[] { "sa", "Sanskrit", "Sanskrit" },
+        new string[] { "gd", "Gàidhlig", "Scots Gaelic" },
+        new string[] { "sr", "Српски", "Serbian" },
+        new string[] { "st", "Sesotho", "Sesotho" },
+        new string[] { "sn", "chiShona", "Shona" },
+        new string[] { "sd", "Sindhi", "Sindhi" },
+        new string[] { "si", "Sinhala", "Sinhala" },
+        new string[] { "sl", "Slovenščina", "Slovenian" },
+        new string[] { "so", "Soomaali", "Somali" },
+        new string[] { "su", "Basa Sunda", "Sundanese" },
+        new string[] { "sw", "Kiswahili", "Swahili" },
+        new string[] { "tg", "Тоҷикӣ", "Tajik" },
+        new string[] { "ta", "Tamil", "Tamil" },
+        new string[] { "tt", "Татар", "Tatar" },
+        new string[] { "te", "Telugu", "Telugu" },
+        new string[] { "th", "Thai", "Thai" },
+        new string[] { "ti", "Tigrinya", "Tigrinya" },
+        new string[] { "ts", "Xitsonga", "Tsonga" },
+        new string[] { "tk", "Türkmen", "Turkmen" },
+        new string[] { "ak", "Twi", "Twi" },
+        new string[] { "ur", "Urdu", "Urdu" },
+        new string[] { "ug", "Uyghur", "Uyghur" },
+        new string[] { "uz", "Oʻzbek", "Uzbek" },
+        new string[] { "cy", "Cymraeg", "Welsh" },
+        new string[] { "xh", "isiXhosa", "Xhosa" },
+        new string[] { "yi", "Yiddish", "Yiddish" },
+        new string[] { "yo", "Yorùbá", "Yoruba" },
+        new string[] { "zu", "isiZulu", "Zulu" }
+    };
+
+    // Escrita da direita para a esquerda (arabe, hebraico...) ou com letras que se juntam (indianos, tailandes...):
+    // o jogo nao sabe desenhar direito, entao o menu avisa que pode aparecer quebrado.
+    private static readonly string[] idiomasDificeis = new string[]
+    {
+        "ar", "iw", "fa", "ur", "ps", "sd", "ug", "yi", "dv", "ckb",
+        "hi", "bn", "ta", "te", "kn", "ml", "mr", "gu", "pa", "ne", "si", "or", "as", "sa",
+        "th", "lo", "km", "my", "am", "ti"
+    };
+
+    public static bool IdiomaDificil(string codigo)
+    {
+        return Array.IndexOf(idiomasDificeis, codigo) >= 0;
+    }
+
+    // linha do idioma (codigo, nome mostrado, nome em ingles) na lista fixa ou na do "Outro..."; null se nao achar
+    public static string[] AcharIdioma(string codigo)
+    {
+        for (int i = 0; i < Idiomas.Length; i++)
+            if (Idiomas[i][0] == codigo) return Idiomas[i];
+        for (int i = 0; i < IdiomasOutros.Length; i++)
+            if (IdiomasOutros[i][0] == codigo) return IdiomasOutros[i];
+        return null;
+    }
+
+    // true = o idioma escolhido nao esta na grade fixa (veio do "Outro...")
+    public static bool IdiomaOutro()
+    {
+        for (int i = 0; i < Idiomas.Length; i++)
+            if (Idiomas[i][0] == Idioma) return false;
+        return true;
+    }
 
     // Estilos de traducao (so valem para IA; o Google Tradutor nao aceita instrucoes).
     // nome, instrucao (em ingles, enviada junto com as regras fixas)
@@ -166,9 +313,8 @@ internal static class LiveConfig
 
     public static string NomeIdiomaIngles()
     {
-        for (int i = 0; i < Idiomas.Length; i++)
-            if (Idiomas[i][0] == Idioma) return Idiomas[i][2];
-        return Idioma;
+        string[] l = AcharIdioma(Idioma);
+        return l != null ? l[2] : Idioma;
     }
 
     public static void Marcar() { sujo = true; }

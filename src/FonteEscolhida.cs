@@ -233,6 +233,16 @@ internal static class FonteEscolhida
             case "vi": return basico + "ăâđêôơưĂÂĐÊÔƠƯạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ";
             case "cs": return basico + "áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ";
             case "ro": return basico + "ăâîĂÂÎ";
+            case "pt-PT": return basico + "ãõáéíóúâêôàçÃÕÁÉÍÓÚÂÊÔÀÇ";
+            case "sv": return basico + "åäöÅÄÖ";
+            case "da":
+            case "no": return basico + "æøåÆØÅ";
+            case "fi": return basico + "äöåÄÖÅ";
+            case "hu": return basico + "áéíóöőúüűÁÉÍÓÖŐÚÜŰ";
+            case "el": return "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρστυφχψωάέήίόύώ";
+            case "bg": return Cirilico + "Ъъ";
+            case "sk": return basico + "áäčďéíľĺňóôŕšťúýžÁÄČĎÉÍĽĹŇÓÔŔŠŤÚÝŽ";
+            case "hr": return basico + "čćđšžČĆĐŠŽ";
             case "ja": return "日本語のをはがでしたアイウ";
             case "ko": return "한국어의가는을에서";
             case "zh-CN": return "中文的是在了不和有";

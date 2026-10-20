@@ -55,6 +55,7 @@ internal static class LiveMenu
     private static GUIStyle sTitulo;
     private static GUIStyle sMarca;
     private static GUIStyle sPeq;
+    private static GUIStyle sTesteTxt;
     private static GUIStyle sCab;
     private static GUIStyle sCel;
     private static GUIStyle sErro;
@@ -349,7 +350,7 @@ internal static class LiveMenu
             case 8: PaginaPainel(); break;
             case 9: PaginaInterface(); break;
             case 1: PaginaProvedor(drv); break;
-            case 2: PaginaEstilo(); break;
+            case 2: PaginaEstilo(drv); break;
             case 3: PaginaGlossario(); break;
             case 4: PaginaCategorias(); break;
             case 5: PaginaAvancado(); break;
@@ -696,16 +697,24 @@ internal static class LiveMenu
             nomesIdioma[i] = LiveConfig.Idiomas[i][1];
             if (LiveConfig.Idiomas[i][0] == LiveConfig.Idioma) idxIdioma = i;
         }
+        bool outro = LiveConfig.IdiomaOutro();
+        if (outro) idxIdioma = -1;     // idioma do "Outro...": nenhum da grade fica marcado
         int novoIdioma = Escolha(idxIdioma, nomesIdioma, 4, larguraUtil);
-        if (novoIdioma != idxIdioma)
+        if (novoIdioma != idxIdioma && novoIdioma >= 0)
         {
-            LiveConfig.Idioma = LiveConfig.Idiomas[novoIdioma][0];
-            TradCache.TrocouIdioma();
-            Glossario.TrocouIdioma();
-            FonteEscolhida.ConferirIdioma();   // fonte sem as letras do idioma novo volta para a do jogo
-            termoEdit = null;
-            Mudou();
+            TrocarIdioma(LiveConfig.Idiomas[novoIdioma][0]);
+            outroAberto = false;
         }
+
+        // botao "Outro...": abre a busca com os outros idiomas do Google; com um deles escolhido, mostra o nome
+        string rotOutro = outro ? NomeIdiomaAtual() + "  (" + LiveTxt.T("io_trocar") + ")" : LiveTxt.T("io_outro");
+        if (GUILayout.Button(rotOutro, outro || outroAberto ? sSel : sBtn, GUILayout.Height(28f)))
+        {
+            outroAberto = !outroAberto;
+            buscaIdioma = "";
+        }
+        if (outroAberto) BuscaIdiomas();
+        if (LiveConfig.IdiomaDificil(LiveConfig.Idioma)) GUILayout.Label(LiveTxt.T("io_dificil"), sAviso);
         GUILayout.Label(LiveTxt.T("aviso_cjk"), sPeq);
         FimCartao();
 
@@ -724,6 +733,58 @@ internal static class LiveMenu
         GUILayout.Label(LiveTxt.T("fonte_dica"), sPeq);
         if (LiveConfig.Fontes == 0) GUILayout.Label(LiveTxt.T("fonte_nenhum"), sAviso);
         FimCartao();
+    }
+
+    private static bool outroAberto;
+    private static string buscaIdioma = "";
+
+    private static void TrocarIdioma(string codigo)
+    {
+        if (codigo == LiveConfig.Idioma) return;
+        LiveConfig.Idioma = codigo;
+        TradCache.TrocouIdioma();
+        Glossario.TrocouIdioma();
+        FonteEscolhida.ConferirIdioma();   // fonte sem as letras do idioma novo volta para a do jogo
+        termoEdit = null;
+        Mudou();
+    }
+
+    // campo de busca + todos os idiomas do "Outro..." que batem com o texto (nome, nome em ingles ou codigo).
+    // A lista fica na propria pagina, que ja tem barra de rolagem.
+    private static void BuscaIdiomas()
+    {
+        GUILayout.Space(4f);
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(LiveTxt.T("io_buscar"), sPeq, GUILayout.Width(110f));
+        buscaIdioma = GUILayout.TextField(buscaIdioma ?? "");
+        GUILayout.EndHorizontal();
+        string b = (buscaIdioma ?? "").Trim().ToLowerInvariant();
+        List<string> codigos = new List<string>();
+        List<string> nomes = new List<string>();
+        int sel = -1;
+        for (int i = 0; i < LiveConfig.IdiomasOutros.Length; i++)
+        {
+            string[] l = LiveConfig.IdiomasOutros[i];
+            if (b.Length > 0 && l[1].ToLowerInvariant().IndexOf(b, StringComparison.Ordinal) < 0
+                && l[2].ToLowerInvariant().IndexOf(b, StringComparison.Ordinal) < 0 && l[0].ToLowerInvariant() != b) continue;
+            if (l[0] == LiveConfig.Idioma) sel = codigos.Count;
+            codigos.Add(l[0]);
+            string nome = l[1] == l[2] ? l[1] : l[1] + " (" + l[2] + ")";
+            if (LiveConfig.IdiomaDificil(l[0])) nome += " *";
+            nomes.Add(nome);
+        }
+        if (codigos.Count == 0)
+        {
+            GUILayout.Label(LiveTxt.T("io_nenhum"), sPeq);
+            return;
+        }
+        int e = Escolha(sel, nomes.ToArray(), 3, larguraUtil);
+        if (e != sel && e >= 0)
+        {
+            TrocarIdioma(codigos[e]);
+            outroAberto = false;
+        }
+        GUILayout.Label(LiveTxt.T("io_estrela"), sPeq);
     }
 
     // ---------------- aba 2: Provedor / API ----------------
@@ -809,7 +870,7 @@ internal static class LiveMenu
 
     // ---------------- aba 3: Estilo e instrucoes extras ----------------
 
-    private static void PaginaEstilo()
+    private static void PaginaEstilo(MonoBehaviour drv)
     {
         if (LiveConfig.ProvedorId == LiveConfig.IdGoogle)
         {
@@ -828,6 +889,28 @@ internal static class LiveMenu
         }
         // resumo do estilo escolhido
         GUILayout.Label(LiveTxt.T("resumo" + LiveConfig.Estilo), sOk);
+        FimCartao();
+
+        // como a IA traduz (estava no Avancado; mexe no resultado da traducao, entao fica junto do estilo)
+        Cartao(LiveTxt.T("estilo_ia"));
+        // contexto para a IA
+        bool ctx = Marca(LiveConfig.Contexto, LiveTxt.T("contexto"));
+        if (ctx != LiveConfig.Contexto)
+        {
+            LiveConfig.Contexto = ctx;
+            LiveConfig.Marcar();
+        }
+        GUILayout.Label(LiveTxt.T("contexto_dica"), sPeq);
+
+        // deixar a IA pensar (melhor, mais lento) ou pedir o minimo (mais rapido)
+        bool rac = Marca(LiveConfig.Raciocinio, LiveTxt.T("raciocinio"));
+        if (rac != LiveConfig.Raciocinio)
+        {
+            LiveConfig.Raciocinio = rac;
+            LiveConfig.Marcar();
+            Provedores.LimparRaciocinio();
+        }
+        GUILayout.Label(LiveTxt.T("raciocinio_dica"), sPeq);
         FimCartao();
 
         Cartao(null);
@@ -855,13 +938,49 @@ internal static class LiveMenu
         if (ex >= 0) AdicionarExtra(exemplos[ex]);
 
         GUILayout.Space(4f);
+        GUILayout.BeginHorizontal();
         if (GUILayout.Button(LiveTxt.T("limpar_extras"), GUILayout.Width(110f)))
         {
             LiveConfig.PromptExtra = "";
             LiveConfig.Marcar();
         }
         GUILayout.Space(6f);
+        // manda o texto de teste para a IA (sem e com as instrucoes) e mostra o resultado na telinha abaixo
+        bool podeTestar = !LiveMotor.TestandoEstilo && (LiveConfig.PromptExtra ?? "").Trim().Length > 0;
+        if (GUILayout.Button(LiveTxt.T("et_testar"), podeTestar ? sSel : sBtn, GUILayout.Width(200f)) && podeTestar)
+            LiveMotor.TestarEstilo(drv);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+        if ((LiveConfig.PromptExtra ?? "").Trim().Length == 0) GUILayout.Label(LiveTxt.T("et_vazio"), sPeq);
+        GUILayout.Space(6f);
         GUILayout.Label(LiveTxt.T("estilo_nota"), sPeq);
+        FimCartao();
+
+        if (LiveMotor.TestandoEstilo || LiveMotor.EstiloEstado.Length > 0) TelinhaTeste();
+    }
+
+    // Telinha do teste: Original, Sem instrucoes e Com instrucoes. Lado a lado se couber; senao um embaixo do outro
+    // (a pagina ja tem barra de rolagem).
+    private static void TelinhaTeste()
+    {
+        Cartao(LiveTxt.T("et_titulo"));
+        GUILayout.Label(LiveMotor.EstiloEstado, LiveMotor.TestandoEstilo ? sPeq : (LiveMotor.EstiloOk ? sOk : sAviso));
+        string[] tit = new string[] { LiveTxt.T("et_orig"), LiveTxt.T("et_sem"), LiveTxt.T("et_com") };
+        string[] txt = new string[] { LiveMotor.TextoTesteEstilo, LiveMotor.EstiloSem, LiveMotor.EstiloCom };
+        float cw = Mathf.Floor((larguraUtil - 20f) / 3f);
+        bool lado = cw >= 200f;
+        if (!lado) cw = larguraUtil - 8f;
+        if (lado) GUILayout.BeginHorizontal();
+        for (int i = 0; i < 3; i++)
+        {
+            GUILayout.BeginVertical(sBloco, GUILayout.Width(cw));
+            GUILayout.Label(tit[i], sCab);
+            string t = txt[i];
+            if (t.Length == 0) t = LiveMotor.TestandoEstilo ? "..." : "-";
+            GUILayout.Label(t, sTesteTxt, GUILayout.Width(cw - 24f));
+            GUILayout.EndVertical();
+        }
+        if (lado) GUILayout.EndHorizontal();
         FimCartao();
     }
 
@@ -1079,13 +1198,20 @@ internal static class LiveMenu
 
     // Caixa de texto com varias linhas e quebra de linha (o jogo so tem TextField de uma linha:
     // ligamos a quebra de linha so durante esta chamada e voltamos ao normal em seguida).
+    // A largura e fixa (a da aba): sem ela o GUILayout mede o texto numa linha so e a caixa sai da janela.
+    // A altura cresce se o texto passar das linhas pedidas.
     private static string Caixa(string valor, int linhas)
     {
         GUIStyle st = GUI.skin.textField;
         bool antes = st.wordWrap;
         st.wordWrap = true;
         string r;
-        try { r = GUILayout.TextField(valor, GUILayout.Height(linhas * 20f + 6f)); }
+        try
+        {
+            float w = Math.Max(100f, larguraUtil);
+            float h = Math.Max(linhas * 20f + 6f, st.CalcHeight(new GUIContent(valor ?? ""), w) + 4f);
+            r = GUILayout.TextField(valor ?? "", GUILayout.Width(w), GUILayout.Height(h));
+        }
         finally { st.wordWrap = antes; }
         return r;
     }
@@ -1412,26 +1538,6 @@ internal static class LiveMenu
         FimCartao();
 
         Cartao(LiveTxt.T("av_opcoes"));
-        // contexto para a IA (so vale no modo com chave)
-        bool ctx = Marca(LiveConfig.Contexto, LiveTxt.T("contexto"));
-        if (ctx != LiveConfig.Contexto)
-        {
-            LiveConfig.Contexto = ctx;
-            LiveConfig.Marcar();
-        }
-        GUILayout.Label(LiveTxt.T("contexto_dica"), sPeq);
-
-        // deixar a IA pensar (melhor, mais lento) ou pedir o minimo (mais rapido)
-        bool rac = Marca(LiveConfig.Raciocinio, LiveTxt.T("raciocinio"));
-        if (rac != LiveConfig.Raciocinio)
-        {
-            LiveConfig.Raciocinio = rac;
-            LiveConfig.Marcar();
-            Provedores.LimparRaciocinio();
-        }
-        GUILayout.Label(LiveTxt.T("raciocinio_dica"), sPeq);
-        GUILayout.Space(8f);
-
         // tamanho minimo da fonte quando o texto nao cabe
         GUILayout.BeginHorizontal();
         GUILayout.Label(LiveTxt.T("fonte_min"), GUILayout.Width(250f));
@@ -1806,9 +1912,8 @@ internal static class LiveMenu
 
     private static string NomeIdiomaAtual()
     {
-        for (int i = 0; i < LiveConfig.Idiomas.Length; i++)
-            if (LiveConfig.Idiomas[i][0] == LiveConfig.Idioma) return LiveConfig.Idiomas[i][1];
-        return LiveConfig.Idioma;
+        string[] l = LiveConfig.AcharIdioma(LiveConfig.Idioma);
+        return l != null ? l[1] : LiveConfig.Idioma;
     }
 
     // cartao do resumo: titulo, valor, linha de baixo e "Abrir"; destacado = cor do tema no fundo
@@ -1984,6 +2089,10 @@ internal static class LiveMenu
         sPeq.fontSize = 12;
         sPeq.wordWrap = true;
         sPeq.normal.textColor = cinza;
+
+        sTesteTxt = new GUIStyle(sRotulo);
+        sTesteTxt.fontSize = 13;
+        sTesteTxt.wordWrap = true;
 
         sCab = new GUIStyle(sPeq);
         sCab.fontStyle = FontStyle.Bold;
