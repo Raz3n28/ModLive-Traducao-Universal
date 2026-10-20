@@ -66,6 +66,16 @@ PROXIMAS MELHORIAS (anotadas para fazer depois; [x] = feito)
 [x] QR code do Ko-fi na lateral do menu (cartao "Me apoie", texto no idioma do menu, sem link escrito;
     clicar no QR abre a pagina). Aparece quando a janela tem altura para ele.
 
+LISTA DE DEFEITOS (rodada nova)
+-------------------------------
+[ ] 1. Caixa "Instrucoes extras" (aba Estilo) passa da borda direita da janela do menu: o texto longo
+    fica numa linha so, sem quebrar, e a caixa estica para fora da tela do mod.
+    Provavel causa: em Caixa (src\Menu.cs) a caixa e GUILayout.TextField com wordWrap ligado so na hora,
+    mas o GUILayout calcula a largura pelo texto inteiro em uma linha (CalcSize), entao a caixa cresce
+    com o texto. Conserto: dar largura fixa (a largura livre da aba, ex. GUILayout.GetRect com
+    ExpandWidth + MaxWidth, ou Width da area) para a quebra de linha funcionar. Vale para todas as
+    chamadas de Caixa (Instrucoes extras e Palavras/Instrucao das Categorias).
+
 Notas do que foi feito na ultima rodada:
   - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).
   - Aba Interface: tecla de voltar ao padrao comeca sem tecla (escolha em Avancado > Teclas ou na propria aba).
