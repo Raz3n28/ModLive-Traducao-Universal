@@ -75,8 +75,6 @@ LISTA DE DEFEITOS (rodada nova)
     com o texto. Conserto: dar largura fixa (a largura livre da aba, ex. GUILayout.GetRect com
     ExpandWidth + MaxWidth, ou Width da area) para a quebra de linha funcionar. Vale para todas as
     chamadas de Caixa (Instrucoes extras e Palavras/Instrucao das Categorias).
-    + Pedido do usuario (juntado aqui): depois de quebrar a linha, SE o texto passar da altura da caixa,
-      mostrar barra de rolagem vertical dentro dela (sem barra quando o texto cabe).
 
 [ ] 2. Aba Estilo: o usuario nao sabe se as "Instrucoes extras" foram aceitas (hoje elas sao salvas sozinhas
     a cada letra digitada, sem nenhum aviso). Pedido:
@@ -89,6 +87,9 @@ LISTA DE DEFEITOS (rodada nova)
     - assim o jogador ve na hora se a traducao mudou do jeito que pediu.
     - Lugar (combinado com o usuario): botao "Testar instrucoes" na linha do "Limpar"; a telinha com os
       3 quadros fica num cartao novo logo abaixo do cartao das instrucoes (o espaco vazio da aba Estilo).
+    - Os 3 quadros LADO A LADO (3 colunas, texto quebrando a linha) quando a janela tiver largura.
+      Se nao couber (janela estreita), um embaixo do outro, e a pagina usa a barra de rolagem
+      (a area das abas ja tem rolagem: BeginScrollView em src\Menu.cs; conferir que ela aparece aqui).
     Texto de teste (ingles, ~290 caracteres, com palavras que a IA costuma traduzir "dificil"):
       "Commander, the station's lexicon database is offline. Acquire three energy cells from the derelict
        freighter, then return to the hangar. Beware: pirates have been spotted near the asteroid belt.
