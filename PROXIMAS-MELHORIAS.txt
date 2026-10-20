@@ -75,6 +75,8 @@ LISTA DE DEFEITOS (rodada nova)
     com o texto. Conserto: dar largura fixa (a largura livre da aba, ex. GUILayout.GetRect com
     ExpandWidth + MaxWidth, ou Width da area) para a quebra de linha funcionar. Vale para todas as
     chamadas de Caixa (Instrucoes extras e Palavras/Instrucao das Categorias).
+    + Pedido do usuario (juntado aqui): depois de quebrar a linha, SE o texto passar da altura da caixa,
+      mostrar barra de rolagem vertical dentro dela (sem barra quando o texto cabe).
 
 [ ] 2. Aba Estilo: o usuario nao sabe se as "Instrucoes extras" foram aceitas (hoje elas sao salvas sozinhas
     a cada letra digitada, sem nenhum aviso). Pedido:
