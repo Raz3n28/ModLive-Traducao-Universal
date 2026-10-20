@@ -76,6 +76,20 @@ LISTA DE DEFEITOS (rodada nova)
     ExpandWidth + MaxWidth, ou Width da area) para a quebra de linha funcionar. Vale para todas as
     chamadas de Caixa (Instrucoes extras e Palavras/Instrucao das Categorias).
 
+[ ] 2. Aba Estilo: o usuario nao sabe se as "Instrucoes extras" foram aceitas (hoje elas sao salvas sozinhas
+    a cada letra digitada, sem nenhum aviso). Pedido:
+    - botao "Enviar / Testar instrucoes" embaixo da caixa;
+    - ao clicar, o mod manda um texto de teste para a IA com o estilo + instrucoes atuais e mostra uma
+      "telinha" (quadro dentro do cartao) com: "Instrucoes recebidas" + Original + Traducao;
+    - assim o jogador ve na hora se a traducao mudou do jeito que pediu.
+    Texto de teste (ingles, ~290 caracteres, com palavras que a IA costuma traduzir "dificil"):
+      "Commander, the station's lexicon database is offline. Acquire three energy cells from the derelict
+       freighter, then return to the hangar. Beware: pirates have been spotted near the asteroid belt.
+       Your reward will be 500 credits and a rare weapon blueprint. Good luck out there, pilot!"
+    Onde mexer: src\Menu.cs (PaginaEstilo), reaproveitar o caminho do "Testar conexao" (LiveMotor.Testar)
+    para fazer um pedido unico fora da fila; textos novos nos 6 idiomas do menu. O teste NAO entra no cache.
+    So no modo com chave (no Google gratis a aba Estilo ja fica desligada).
+
 Notas do que foi feito na ultima rodada:
   - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).
   - Aba Interface: tecla de voltar ao padrao comeca sem tecla (escolha em Avancado > Teclas ou na propria aba).
