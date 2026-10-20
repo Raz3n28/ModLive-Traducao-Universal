@@ -98,6 +98,18 @@ LISTA DE DEFEITOS (rodada nova)
     para fazer um pedido unico fora da fila; textos novos nos 6 idiomas do menu. O teste NAO entra no cache.
     So no modo com chave (no Google gratis a aba Estilo ja fica desligada).
 
+[ ] 3. Aba Geral > "Traduzir para": poder escolher um idioma alem dos 18 da lista.
+    Como e hoje: lista fixa LiveConfig.Idiomas em src\Config.cs (codigo, nome no idioma, nome em ingles
+    para a IA) + letras de cada idioma em Letras() de src\FonteEscolhida.cs (para escolher fonte que cobre).
+    Trabalho: pouco. Cada idioma novo e 1 linha em Idiomas + 1 linha em Letras. Cache e glossario ja sao
+    separados por codigo (cache_<codigo>.txt), entao nada e resetado.
+    Opcao extra: botao "Outro..." com campo para digitar o codigo (ex.: sv, el, hu); o Google usa o codigo e
+    a IA usa o nome digitado.
+    Cuidado: arabe, hebraico, persa (escrita da direita para a esquerda) e tailandes/hindi (letras que se
+    juntam) aparecem quebrados/invertidos no jogo; nao oferecer esses (ou avisar).
+    Aproveitar: Japanese, Korean e Chinese (simpl.) estao escritos em ingles na lista (provavelmente porque a
+    fonte do menu nao tem essas letras); manter, mas conferir.
+
 Notas do que foi feito na ultima rodada:
   - Editar nas "Ultimas traducoes" so aparece para termo curto (ou que ja esta no glossario).
   - Aba Interface: tecla de voltar ao padrao comeca sem tecla (escolha em Avancado > Teclas ou na propria aba).
