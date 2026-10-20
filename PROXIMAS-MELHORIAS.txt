@@ -103,8 +103,16 @@ LISTA DE DEFEITOS (rodada nova)
     para a IA) + letras de cada idioma em Letras() de src\FonteEscolhida.cs (para escolher fonte que cobre).
     Trabalho: pouco. Cada idioma novo e 1 linha em Idiomas + 1 linha em Letras. Cache e glossario ja sao
     separados por codigo (cache_<codigo>.txt), entao nada e resetado.
-    Opcao extra: botao "Outro..." com campo para digitar o codigo (ex.: sv, el, hu); o Google usa o codigo e
-    a IA usa o nome digitado.
+    DECIDIDO PELO USUARIO: fazer A + B.
+    A) mais idiomas fixos na grade (escolha minha, os mais comuns: sueco, grego, hungaro, dinamarques,
+       finlandes, noruegues, bulgaro, portugues de Portugal, malaio, filipino...).
+    B) botao "Outro..." no fim da grade. Ao clicar, abre um campo de busca + lista com rolagem com todos os
+       idiomas que o Google Tradutor aceita (tabela interna: codigo + nome no idioma + nome em ingles).
+       O jogador digita "sue" e aparece "Svenska (Swedish)"; clica e pronto. Assim o codigo sempre esta
+       certo (o Google precisa do codigo) e a IA recebe o nome em ingles. O escolhido fica salvo no
+       config.txt e aparece na grade no lugar do "Outro..." (com um "trocar").
+       Idiomas da direita para a esquerda e de letras que se juntam aparecem com aviso "pode ficar quebrado".
+       Se o idioma nao tiver letras em Letras(), usar so as letras basicas para a busca de fonte.
     Cuidado: arabe, hebraico, persa (escrita da direita para a esquerda) e tailandes/hindi (letras que se
     juntam) aparecem quebrados/invertidos no jogo; nao oferecer esses (ou avisar).
     Aproveitar: Japanese, Korean e Chinese (simpl.) estao escritos em ingles na lista (provavelmente porque a
