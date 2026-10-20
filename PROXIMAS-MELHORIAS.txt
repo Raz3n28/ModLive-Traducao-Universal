@@ -87,6 +87,8 @@ LISTA DE DEFEITOS (rodada nova)
       Sao 2 pedidos para a IA (decidido pelo usuario). Os dois usam a MESMA IA, modelo e estilo que o
       jogador escolheu; a unica diferenca entre eles sao as instrucoes extras;
     - assim o jogador ve na hora se a traducao mudou do jeito que pediu.
+    - Lugar (combinado com o usuario): botao "Testar instrucoes" na linha do "Limpar"; a telinha com os
+      3 quadros fica num cartao novo logo abaixo do cartao das instrucoes (o espaco vazio da aba Estilo).
     Texto de teste (ingles, ~290 caracteres, com palavras que a IA costuma traduzir "dificil"):
       "Commander, the station's lexicon database is offline. Acquire three energy cells from the derelict
        freighter, then return to the hangar. Beware: pirates have been spotted near the asteroid belt.
